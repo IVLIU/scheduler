@@ -1,0 +1,32 @@
+# job的通用配置
+.common:
+  # 只能在页面触发或特定分支提交代码触发
+  only:
+    - master
+  except:
+    - dev
+  tags:
+    - winServer
+
+variables:
+  NPM_TOKEN: "$TOKEN"
+  PUBLISH_URL: "$PUBLISH_URL"
+
+# 缓存公共node模块
+cache:
+  key: node_modules_cache
+  paths:
+    - node_modules/
+before_script:
+  - yarn
+  - echo "$PUBLISH_URL/repository/npm-hosted/:_authToken=NpmToken.$NPM_TOKEN" >> .npmrc
+
+stages:
+  - build_deploy
+
+publish:
+  extends: .common
+  stage: build_deploy
+  script:
+    - yarn run build
+    - npm publish

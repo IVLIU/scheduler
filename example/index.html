@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>scheduler example</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    label {
+      margin-right: 12px;
+      font-size: 14px;
+    }
+    input[type='text'] {
+      width: 400px;
+      height: 36px;
+    }
+    div[class='input-container'] {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 60%;
+      margin-bottom: 24px;
+    }
+    div {
+      width: 60%;
+    }
+  </style>
+</head>
+<body>
+  <h2>scheduler playground</h2>
+  <div class="input-container">
+    <label for="checkbox-input ">delay 100ms:</label>
+    <input type="checkbox" id="checkbox-input">
+  </div>
+  <div class="input-container">
+    <label for="text-input">value:</label>
+    <input type="text" placeholder="please enter" autofocus>
+  </div>
+  <div>
+    <p>sync value is:</p>
+    <p class="sync-p">please enter</p>
+  </div>
+  <div>
+    <p>transition value is:</p>
+    <p class="transition-p">please enter</p>
+  </div>
+  <script src="./index.ts" type="module"></script>
+</body>
+</html>

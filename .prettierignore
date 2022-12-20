@@ -1,0 +1,6 @@
+**/*.md
+**/*.svg
+**/*.test.ts
+package.json
+yarn.lock
+/dist
