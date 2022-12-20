@@ -3,6 +3,10 @@
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "homepage": "https://github.com/IVLIU/scheduler",
+  "bugs": {
+    "url": "https://github.com/IVLIU/scheduler/issues"
+  },
   "publishConfig": {
     "registry": "http://10.4.2.21:8081/repository/npm-hosted/"
   },
