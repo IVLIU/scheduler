@@ -162,7 +162,13 @@ export const schedule = () =>
         }
       }
       const lane = _remainingLanes & -_remainingLanes;
-      postTask((lane & SyncLane) === SyncLane ? 'user-blocking' : (lane & TransitionLane) === TransitionLane ? 'background' : 'user-visible');
+      postTask(
+        (lane & SyncLane) === SyncLane
+          ? 'user-blocking'
+          : (lane & TransitionLane) === TransitionLane
+          ? 'background'
+          : 'user-visible',
+      );
     }
     _needSchedule = false;
   });
