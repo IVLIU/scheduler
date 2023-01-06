@@ -31,10 +31,6 @@ export interface IOptions {
   debugger: ((task: ITask) => void) | null;
 }
 
-export interface experimental_IOptions extends IOptions {
-  delay: number;
-}
-
 export interface ITaskController {
   new (options: {
     priority?: 'user-blocking' | 'user-visible' | 'background';

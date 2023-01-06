@@ -2,8 +2,6 @@ import {
   runIdleCallback,
   runSyncIdleCallback,
   runTransitionIdleCallback,
-  // 实验性支持浏览器原生scheduler
-  native_runIdleCallback,
   shouldYield,
   createAbortController,
 } from '../.';
@@ -167,7 +165,7 @@ function co(gen: Generator<Promise<number>>) {
       }
       iter.value
         .then(value => {
-          native_runIdleCallback(() => {
+          runIdleCallback(() => {
             console.log('gen', value);
             next(gen.next(value));
           });
@@ -179,22 +177,6 @@ function co(gen: Generator<Promise<number>>) {
 }
 
 co(gen());
-
-native_runIdleCallback(
-  () => {
-    console.log('transition task in native_runIdleCallback');
-  },
-  { transition: true },
-);
-native_runIdleCallback(() => {
-  console.log('normal task in native_runIdleCallback');
-});
-native_runIdleCallback(
-  () => {
-    console.log('sync task in native_runIdleCallback');
-  },
-  { sync: true },
-);
 
 const checkbox = document.querySelector(
   'input[type="checkbox"]',
