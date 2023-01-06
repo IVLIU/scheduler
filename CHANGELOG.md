@@ -1,3 +1,20 @@
+# 1.2.0 (2023-01-06)
+
+
+### Features
+
+* 调度器优化 ([0f84c43](https://github.com/IVLIU/scheduler/commit/0f84c435c3a413bd8969a436cdb05744b074152b))
+* 调度器优化 ([5bc8ed9](https://github.com/IVLIU/scheduler/commit/5bc8ed99c8108e2cd4a85de59a3cc4febf19ea5a))
+* 更新dispatcher ([7caa6c3](https://github.com/IVLIU/scheduler/commit/7caa6c325110aaddd8afbce0dd2292e3f25e6fc7))
+* 更新dispatcher ([5e0b0a5](https://github.com/IVLIU/scheduler/commit/5e0b0a5227617ba033c4b7d196da7943c211066c))
+* 更新dispatcher ([08d9164](https://github.com/IVLIU/scheduler/commit/08d916485ce76500b5c0634b39abd691c2cf46bd))
+* 更新dispatcher ([dc5c48f](https://github.com/IVLIU/scheduler/commit/dc5c48f7b55bdbd24105d2f87eb07cdd5d900ad7))
+* 完善package.json ([e369908](https://github.com/IVLIU/scheduler/commit/e369908f0363269b9068f24296d991a83fd67fdf))
+* readme ([0dd380d](https://github.com/IVLIU/scheduler/commit/0dd380db9048050acf6432d8e8f29a589644fbb8))
+* to github ([731473e](https://github.com/IVLIU/scheduler/commit/731473e7d1cc1600a79cdcb9b4dccc46a5789feb))
+
+
+
 # [1.2.0](https://code.ii-ai.tech:2222/ued/ii-scheduler/compare/v1.1.5...v1.2.0) (2022-12-03)
 
 
