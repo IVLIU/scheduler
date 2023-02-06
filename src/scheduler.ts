@@ -17,6 +17,7 @@ import {
 } from './const';
 import { ITask, IOptions } from './type';
 
+const _yieldInterval = 5;
 let _pendingTaskQueue: ITask | null = null;
 let _taskQueue: ITask | null = null;
 let _workInProgressTaskQueue: ITask | null = null;
@@ -25,7 +26,6 @@ let _remainingLanes = NoLanes;
 let _urgentScheduleLane = NoLane;
 let _scheduleLane = NoLane;
 let _pendingLane = NoLane;
-let _yieldInterval = 5;
 let _index = 0;
 let _needSchedule = false;
 let _isScheduling = false;
@@ -40,7 +40,6 @@ export const workLoop = () => {
       return;
     }
     let tick = getCurrentTick();
-    _yieldInterval = tick + 5;
     const frameDeadTick = tick + _yieldInterval;
     let task: ITask | null = null;
     do {
@@ -77,9 +76,9 @@ export const workLoop = () => {
   }
 };
 
-export const postTask = createDispatcher(workLoop);
+export const dispatch = createDispatcher(workLoop);
 
-export const runIdleCallback = (
+export const postTask = (
   callback: ITask['callback'],
   options: Partial<IOptions> = {
     sync: false,
@@ -127,22 +126,22 @@ export const runIdleCallback = (
   return _index;
 };
 
-export const runSyncIdleCallback = (
+export const postSyncTask = (
   callback: ITask['callback'],
   options: Partial<Omit<IOptions, 'sync' | 'transition'>> = {
     signal: null,
     effect: null,
   },
-) => runIdleCallback(callback, { ...options, sync: true });
+) => postTask(callback, { ...options, sync: true });
 
-export const runTransitionIdleCallback = (
+export const postTransitionTask = (
   callback: ITask['callback'],
   options: Partial<Omit<IOptions, 'sync'>> = {
     transition: true,
     signal: null,
     effect: null,
   },
-) => runIdleCallback(callback, { transition: true, ...options });
+) => postTask(callback, { transition: true, ...options });
 
 export const schedule = () =>
   runMicroTaskCallback(() => {
@@ -162,7 +161,7 @@ export const schedule = () =>
         }
       }
       const lane = _remainingLanes & -_remainingLanes;
-      postTask(
+      dispatch(
         {
           priority: (lane & SyncLane) === SyncLane
             ? 'user-blocking'
