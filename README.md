@@ -15,12 +15,12 @@ npm install @ai-indeed/scheduler # or yarn add @ai-indeed/scheduler
 
 ## 文档
 
-它提供的核心api只有一个，即runIdleCallback，它很强大也很简单，具体我们看一个例子。
+它提供的核心api只有一个，即postTask，它很强大也很简单，具体我们看一个例子。
 
 ```typescript
-import { runIdleCallback } from '@ai-indeed/scheduler';
+import { postTask } from '@ai-indeed/scheduler';
 
-runIdleCallback(() => console.log('i am a task'));
+postTask(() => console.log('i am a task'));
 ```
 以上是一个最简单是使用，传入一个回调函数，它会在合适的时机被执行
 
@@ -30,22 +30,22 @@ runIdleCallback(() => console.log('i am a task'));
 所以scheduler实现了优先级调度，目前实现了三个优先级（sync priority，normal priority，transition priority），他们的优先级依次降低。
 看个例子
 ```typescript
-import { runIdleCallback } from '@ai-indeed/scheduler';
+import { postTask } from '@ai-indeed/scheduler';
 
-runIdleCallback(() => console.log('sync task'), { sync: true });
-runIdleCallback(() => console.log('normal task'));
-runIdleCallback(() => console.log('transition task'), { transition: true });
-runIdleCallback(() => console.log('transition task'), { transition: { timeout: 3000 } }); // 自定义过期时间
+postTask(() => console.log('sync task'), { sync: true });
+postTask(() => console.log('normal task'));
+postTask(() => console.log('transition task'), { transition: true });
+postTask(() => console.log('transition task'), { transition: { timeout: 3000 } }); // 自定义过期时间
 ```
 同时为了解决饥饿问题，所以我们设置了过期时间，分别是立即过期，50毫秒后过期，和不过期（但是可以设置）。
 
 除此之外，它还提供了一个辅助api，即shouldYield，它帮助您更高效的执行任务。它会在5毫秒后过期。
 看个例子
 ```typescript
-import { runIdleCallback, shouldYield } from '@ai-indeed/scheduler';
+import { postTask, shouldYield } from '@ai-indeed/scheduler';
 
 function _exec() {
-  runIdleCallback(
+  postTask(
     () => {
       let arr: RegExpExecArray = null;
       do {
@@ -72,6 +72,11 @@ _exec();
 ## todo
 
 1. 支持tearing api
-2. 支持native scheduler
-3. 支持delay time
-4. 支持动态调整优先级
+2. 支持delay time
+3. 支持动态调整优先级
+
+## Gitlab
+
+https://code.ii-ai.tech/ued/ii-scheduler
+
+没有权限请联系流川
