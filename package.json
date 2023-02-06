@@ -24,9 +24,9 @@
     "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "publish:patch": "npm run changelog && npm version patch && npm publish",
-    "publish:minor": "npm run changelog && npm version minor && npm publish",
-    "publish:major": "npm run changelog && npm version major && npm publish",
+    "publish:patch": "npm version patch && npm publish",
+    "publish:minor": "npm version minor && npm publish",
+    "publish:major": "npm version major && npm publish",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "preinstall": "npx only-allow pnpm"
   },
