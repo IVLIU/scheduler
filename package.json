@@ -23,7 +23,8 @@
     "publish:patch": "npm run changelog && npm version patch && npm publish",
     "publish:minor": "npm run changelog && npm version minor && npm publish",
     "publish:major": "npm run changelog && npm version major && npm publish",
-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s" 
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "preinstall": "npx only-allow pnpm"
   },
   "peerDependencies": {},
   "lint-staged": {
