@@ -14,6 +14,7 @@ import {
   NORMAL_PRIORITY_TIMEOUT,
   TRANSITION_PRIORITY_TIMEOUT,
   __DEV__,
+  defaultOptions,
 } from './const';
 import { ITask, IOptions } from './type';
 
@@ -80,18 +81,14 @@ export const dispatch = createDispatcher(workLoop);
 
 export const postTask = (
   callback: ITask['callback'],
-  options: Partial<IOptions> = {
-    sync: false,
-    transition: false,
-    signal: null,
-    effect: null,
-    debugger: null,
-  },
+  options: Partial<IOptions> = defaultOptions,
 ) => {
+  options = options === defaultOptions ? options : Object.assign(defaultOptions, options);
   const creationTick = getCurrentTick();
   const task = {
     callback,
     creationTick,
+    executionTick: creationTick,
     signal: options.signal,
     effect: options.effect,
     debugger: options.debugger,

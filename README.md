@@ -74,9 +74,3 @@ _exec();
 1. 支持tearing api
 2. 支持delay time
 3. 支持动态调整优先级
-
-## Gitlab
-
-https://code.ii-ai.tech/ued/ii-scheduler
-
-没有权限请联系流川
