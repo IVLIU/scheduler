@@ -74,4 +74,3 @@ _exec();
 1. 支持tearing api
 2. 支持delay time
 3. 支持动态调整优先级
-

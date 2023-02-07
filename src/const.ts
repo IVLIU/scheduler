@@ -1,3 +1,5 @@
+import type { IOptions } from './type';
+
 // lanes
 export const NoLanes = 0b0000000000000000000000000000000;
 export const NoLane = 0b0000000000000000000000000000000;
@@ -15,3 +17,11 @@ export const TRANSITION_PRIORITY_TIMEOUT = maxSigned31BitInt;
 
 // env
 export const __DEV__ = process.env.NODE_ENV === 'development';
+
+export const defaultOptions = {
+  sync: false,
+  transition: false,
+  signal: null,
+  effect: null,
+  debugger: null,
+} as IOptions;

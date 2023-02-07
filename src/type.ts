@@ -10,6 +10,7 @@ export interface ITask {
   index: number;
   lane: number;
   creationTick: number;
+  executionTick: number;
   expirationTick: number;
   callback: (callTick: number) => void;
   effect: ((aborted: boolean) => void) | null;
