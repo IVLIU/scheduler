@@ -83,7 +83,7 @@ export const postTask = (
   callback: ITask['callback'],
   options: Partial<IOptions> = defaultOptions,
 ) => {
-  options = options === defaultOptions ? options : Object.assign(defaultOptions, options);
+  options = options === defaultOptions ? defaultOptions : { ...defaultOptions, ...options };
   const creationTick = getCurrentTick();
   const task = {
     callback,
@@ -165,7 +165,8 @@ export const schedule = () =>
             : (lane & TransitionLane) === TransitionLane
             ? 'background'
             : 'user-visible',
-      });
+        }
+      );
     }
     _needSchedule = false;
   });
