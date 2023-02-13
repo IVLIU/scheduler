@@ -438,6 +438,10 @@ export const getFirstWorkInProgressTask = (tick: number) => {
   if (_workInProgressTaskQueue === null) {
     return null;
   }
+  const firstTimerTask = peek();
+  if(firstTimerTask && (firstTimerTask.expired || (firstTimerTask.expired = firstTimerTask.expirationTick < tick))) {
+    requestWorkInProgressTaskQueue(tick);
+  }
   const lastWorkInProgressTask = _workInProgressTaskQueue;
   const firstWorkInProgressTask = lastWorkInProgressTask.next;
   return (firstWorkInProgressTask.lane & _scheduleLane) === _scheduleLane
