@@ -28,7 +28,7 @@
   },
   "lint-staged": {
     "**/*.ts?(x)": [
-      "npx prettier --parser=typescript --fix --write",
+      "npx prettier '**/*' --parser=typescript --fix --write",
       "npx tsdx lint"
     ]
   },
