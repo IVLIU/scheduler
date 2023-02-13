@@ -28,8 +28,7 @@
   },
   "lint-staged": {
     "**/*.ts?(x)": [
-      "npx prettier '**/*' --parser=typescript --fix --write",
-      "npx tsdx lint"
+      
     ]
   },
   "name": "@ai-indeed/scheduler",

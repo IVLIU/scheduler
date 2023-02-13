@@ -1,9 +1,9 @@
-import { createDispatcher } from './createDispatcher';
-import { runMicroTaskCallback } from './runMicroTaskCallback';
-import { scheduleInWorker } from './scheduleInWorker';
-import { getCurrentTick } from './getCurrentTick';
-import { isInputPending } from './isInputPending';
-import { warn } from './warn';
+import { createDispatcher } from "./createDispatcher";
+import { runMicroTaskCallback } from "./runMicroTaskCallback";
+import { scheduleInWorker } from "./scheduleInWorker";
+import { getCurrentTick } from "./getCurrentTick";
+import { isInputPending } from "./isInputPending";
+import { warn } from "./warn";
 import {
   NoLanes,
   NoLane,
@@ -15,8 +15,8 @@ import {
   TRANSITION_PRIORITY_TIMEOUT,
   __DEV__,
   defaultOptions,
-} from './const';
-import { ITask, IOptions } from './type';
+} from "./const";
+import { ITask, IOptions } from "./type";
 
 const _yieldInterval = 5;
 let _pendingTaskQueue: ITask | null = null;
@@ -72,13 +72,13 @@ export const workLoop = () => {
       scheduleInWorker() ? true : !isInputPending() && tick < frameDeadTick
     );
     if (task === null) {
-      if((_scheduleLane & SyncLane) === SyncLane) {
+      if ((_scheduleLane & SyncLane) === SyncLane) {
         _firstSyncLaneTask = _currentSyncLaneTask = null;
       }
-      if((_scheduleLane & NormalLane) === NormalLane) {
+      if ((_scheduleLane & NormalLane) === NormalLane) {
         _firstNormalLaneTask = _currentNormalLaneTask = null;
       }
-      if((_scheduleLane & TransitionLane) === TransitionLane) {
+      if ((_scheduleLane & TransitionLane) === TransitionLane) {
         _firstTransitionLaneTask = _currentTransitionLaneTask = null;
       }
       _remainingLanes &= ~_scheduleLane;
@@ -95,10 +95,13 @@ export const workLoop = () => {
 export const dispatch = createDispatcher(workLoop);
 
 export const postTask = (
-  callback: ITask['callback'],
-  options: Partial<IOptions> = defaultOptions,
+  callback: ITask["callback"],
+  options: Partial<IOptions> = defaultOptions
 ) => {
-  options = options === defaultOptions ? defaultOptions : { ...defaultOptions, ...options };
+  options =
+    options === defaultOptions
+      ? defaultOptions
+      : { ...defaultOptions, ...options };
   const creationTick = getCurrentTick();
   const task = {
     callback,
@@ -111,14 +114,14 @@ export const postTask = (
     index: ++_index,
   } as ITask;
   if (options.sync) {
-    if(_firstSyncLaneTask === null) {
+    if (_firstSyncLaneTask === null) {
       _firstSyncLaneTask = _currentSyncLaneTask = task;
     }
     task.lane = ((_remainingLanes |= SyncLane), SyncLane);
     task.expirationTick = creationTick + SYNC_PRIORITY_TIMEOUT;
     task.expired = true;
   } else if (options.transition) {
-    if(_firstTransitionLaneTask === null) {
+    if (_firstTransitionLaneTask === null) {
       _firstTransitionLaneTask = _currentTransitionLaneTask = task;
     }
     task.lane = ((_remainingLanes |= TransitionLane), TransitionLane);
@@ -129,7 +132,7 @@ export const postTask = (
     //     ? creationTick + options.transition.timeout
     //     : TRANSITION_PRIORITY_TIMEOUT;
   } else {
-    if(_firstNormalLaneTask === null) {
+    if (_firstNormalLaneTask === null) {
       _firstNormalLaneTask = _currentNormalLaneTask = task;
     }
     task.lane = ((_remainingLanes |= NormalLane), NormalLane);
@@ -150,20 +153,20 @@ export const postTask = (
 };
 
 export const postSyncTask = (
-  callback: ITask['callback'],
-  options: Partial<Omit<IOptions, 'sync' | 'transition'>> = {
+  callback: ITask["callback"],
+  options: Partial<Omit<IOptions, "sync" | "transition">> = {
     signal: null,
     effect: null,
-  },
+  }
 ) => postTask(callback, { ...options, sync: true });
 
 export const postTransitionTask = (
-  callback: ITask['callback'],
-  options: Partial<Omit<IOptions, 'sync'>> = {
+  callback: ITask["callback"],
+  options: Partial<Omit<IOptions, "sync">> = {
     transition: true,
     signal: null,
     effect: null,
-  },
+  }
 ) => postTask(callback, { transition: true, ...options });
 
 export const schedule = () =>
@@ -184,15 +187,14 @@ export const schedule = () =>
         }
       }
       const lane = _remainingLanes & -_remainingLanes;
-      dispatch(
-        {
-          priority: (lane & SyncLane) === SyncLane
-            ? 'user-blocking'
+      dispatch({
+        priority:
+          (lane & SyncLane) === SyncLane
+            ? "user-blocking"
             : (lane & TransitionLane) === TransitionLane
-            ? 'background'
-            : 'user-visible',
-        }
-      );
+            ? "background"
+            : "user-visible",
+      });
     }
     _needSchedule = false;
   });
@@ -222,7 +224,10 @@ export const pushPendingTask = (task: ITask) => {
     lastPendingTask.nextLaneTask = firstPendingTask;
     firstPendingTask.prevLaneTask = lastPendingTask;
     _firstPendingLaneTask = lastPendingTask;
-    if(lastPendingTask !== _currentSyncLaneTask && (taskLane & SyncLane) === SyncLane) {
+    if (
+      lastPendingTask !== _currentSyncLaneTask &&
+      (taskLane & SyncLane) === SyncLane
+    ) {
       const firstSyncLaneTask = _firstSyncLaneTask!;
       const currentSyncLaneTask = _currentSyncLaneTask!;
       currentSyncLaneTask.nextSameLaneTask = lastPendingTask;
@@ -231,16 +236,22 @@ export const pushPendingTask = (task: ITask) => {
       firstSyncLaneTask.prevSameLaneTask = lastPendingTask;
       _currentSyncLaneTask = lastPendingTask;
     }
-    if(task !== _currentNormalLaneTask && (taskLane & NormalLane) === NormalLane) {
+    if (
+      task !== _currentNormalLaneTask &&
+      (taskLane & NormalLane) === NormalLane
+    ) {
       const firstNormalLaneTask = _firstNormalLaneTask!;
       const currentNormalLaneTask = _currentNormalLaneTask!;
-      currentNormalLaneTask.nextSameLaneTask = lastPendingTask
+      currentNormalLaneTask.nextSameLaneTask = lastPendingTask;
       lastPendingTask.prevSameLaneTask = currentNormalLaneTask;
       lastPendingTask.nextSameLaneTask = firstNormalLaneTask;
       firstNormalLaneTask.prevSameLaneTask = lastPendingTask;
       _currentNormalLaneTask = task;
     }
-    if(task !== _currentTransitionLaneTask && (taskLane & TransitionLane) === TransitionLane) {
+    if (
+      task !== _currentTransitionLaneTask &&
+      (taskLane & TransitionLane) === TransitionLane
+    ) {
       const firstTransitionLaneTask = _firstTransitionLaneTask!;
       const currentTransitionLaneTask = _currentTransitionLaneTask!;
       currentTransitionLaneTask.nextSameLaneTask = lastPendingTask;
@@ -296,19 +307,31 @@ export const getFirstTask = () => {
 
 export const requestWorkInProgressTaskQueue = (tick: number) => {
   _workInProgressTaskQueue = null;
-  if(_firstTransitionLaneTask && (_firstTransitionLaneTask.expired || (_firstTransitionLaneTask.expired = _firstTransitionLaneTask.expirationTick < tick))) {
+  if (
+    _firstTransitionLaneTask &&
+    (_firstTransitionLaneTask.expired ||
+      (_firstTransitionLaneTask.expired =
+        _firstTransitionLaneTask.expirationTick < tick))
+  ) {
     _workInProgressTaskQueue = _firstTransitionLaneTask.prev;
   }
-  if(_workInProgressTaskQueue === null && _firstNormalLaneTask && (_firstNormalLaneTask.expired || (_firstNormalLaneTask.expired = _firstNormalLaneTask.expirationTick < tick))) {
+  if (
+    _workInProgressTaskQueue === null &&
+    _firstNormalLaneTask &&
+    (_firstNormalLaneTask.expired ||
+      (_firstNormalLaneTask.expired =
+        _firstNormalLaneTask.expirationTick < tick))
+  ) {
     _workInProgressTaskQueue = _firstNormalLaneTask.prev;
   }
-  if(_workInProgressTaskQueue === null) {
-    const currentQueue = (_firstSyncLaneTask || _firstNormalLaneTask || _firstTransitionLaneTask);
-    if(currentQueue) {
+  if (_workInProgressTaskQueue === null) {
+    const currentQueue =
+      _firstSyncLaneTask || _firstNormalLaneTask || _firstTransitionLaneTask;
+    if (currentQueue) {
       _workInProgressTaskQueue = currentQueue.prev;
     }
   }
-  if(_workInProgressTaskQueue) {
+  if (_workInProgressTaskQueue) {
     _scheduleLane = _workInProgressTaskQueue.next.lane;
   }
 };
@@ -320,7 +343,15 @@ export const popWorkInProgressTask = () => {
   const lastWorkInProgressTask = _workInProgressTaskQueue;
   const firstWorkInProgressTask = lastWorkInProgressTask.next;
   if (lastWorkInProgressTask === firstWorkInProgressTask) {
-    _taskQueue = _workInProgressTaskQueue = _firstSyncLaneTask = _firstNormalLaneTask = _firstTransitionLaneTask = _currentSyncLaneTask = _currentNormalLaneTask = _currentTransitionLaneTask = null;
+    _taskQueue =
+      _workInProgressTaskQueue =
+      _firstSyncLaneTask =
+      _firstNormalLaneTask =
+      _firstTransitionLaneTask =
+      _currentSyncLaneTask =
+      _currentNormalLaneTask =
+      _currentTransitionLaneTask =
+        null;
   } else {
     const currentLane = firstWorkInProgressTask.lane;
     const nextFirstWorkInProgressTask = firstWorkInProgressTask.next;
@@ -328,17 +359,20 @@ export const popWorkInProgressTask = () => {
     const nextSameLaneTask = firstWorkInProgressTask.nextSameLaneTask;
     const prevLaneTask = firstWorkInProgressTask.prevLaneTask;
     const nextLaneTask = firstWorkInProgressTask.nextLaneTask;
-    if(nextSameLaneTask && prevSameLaneTask) {
-      if((nextFirstWorkInProgressTask.lane & firstWorkInProgressTask.lane) === NoLane) {
+    if (nextSameLaneTask && prevSameLaneTask) {
+      if (
+        (nextFirstWorkInProgressTask.lane & firstWorkInProgressTask.lane) ===
+        NoLane
+      ) {
         prevSameLaneTask.nextSameLaneTask = nextSameLaneTask;
         nextSameLaneTask.prevSameLaneTask = prevSameLaneTask;
-        if((currentLane & SyncLane) === SyncLane) {
+        if ((currentLane & SyncLane) === SyncLane) {
           _firstSyncLaneTask = nextSameLaneTask;
         }
-        if((currentLane & NormalLane) === NormalLane) {
+        if ((currentLane & NormalLane) === NormalLane) {
           _firstNormalLaneTask = nextSameLaneTask;
         }
-        if((currentLane & TransitionLane) === TransitionLane) {
+        if ((currentLane & TransitionLane) === TransitionLane) {
           _firstTransitionLaneTask = nextSameLaneTask;
         }
       } else {
@@ -346,21 +380,19 @@ export const popWorkInProgressTask = () => {
         nextFirstWorkInProgressTask.nextSameLaneTask = nextSameLaneTask;
         prevLaneTask.nextSameLaneTask = nextFirstWorkInProgressTask;
         nextSameLaneTask.prevSameLaneTask = nextFirstWorkInProgressTask;
-        if((currentLane & SyncLane) === SyncLane) {
+        if ((currentLane & SyncLane) === SyncLane) {
           _firstSyncLaneTask = nextFirstWorkInProgressTask;
         }
-        if((currentLane & NormalLane) === NormalLane) {
+        if ((currentLane & NormalLane) === NormalLane) {
           _firstNormalLaneTask = nextFirstWorkInProgressTask;
         }
-        if((currentLane & TransitionLane) === TransitionLane) {
+        if ((currentLane & TransitionLane) === TransitionLane) {
           _firstTransitionLaneTask = nextFirstWorkInProgressTask;
         }
       }
     }
     if (prevLaneTask && nextLaneTask) {
-      if (
-        nextFirstWorkInProgressTask === nextLaneTask
-      ) {
+      if (nextFirstWorkInProgressTask === nextLaneTask) {
         prevLaneTask.nextLaneTask = nextFirstWorkInProgressTask;
         nextFirstWorkInProgressTask.prevLaneTask = prevLaneTask;
       } else {
