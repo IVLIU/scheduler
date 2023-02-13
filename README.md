@@ -106,3 +106,5 @@ postTask(() => { console.log('我是一个不确定是否执行的任务') },
 1. 支持避免data tearing api
 2. 支持delay time
 3. 支持动态调整优先级
+4. 多实例支持
+5. 上层api
