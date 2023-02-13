@@ -1,27 +1,24 @@
-export interface IBatchConfig {
-  forceBatch: IForceBatch | null;
-}
-
-export interface IForceBatch {
-  lanes: number;
-}
-
 export interface ITask {
   index: number;
+  sortIndex: number;
   lane: number;
+  /** 创建时间 */
   creationTick: number;
+  /** 可调度时间，为将来支持delay做准备，目前等于创建时间 */
   executionTick: number;
+  /** 过期时间 */
   expirationTick: number;
   callback: (callTick: number) => void;
   effect: ((aborted: boolean) => void) | null;
   debugger: ((task: ITask) => void) | null;
   signal: AbortSignal | null;
-  forceBatch: IForceBatch | null;
   expired: boolean;
   prev: ITask;
   next: ITask;
   prevLaneTask: ITask;
   nextLaneTask: ITask;
+  prevSameLaneTask: ITask;
+  nextSameLaneTask: ITask;
 }
 
 export interface IOptions {

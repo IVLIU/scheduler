@@ -1,7 +1,7 @@
 import {
-  runIdleCallback,
-  runSyncIdleCallback,
-  runTransitionIdleCallback,
+  postTask,
+  postSyncTask,
+  postTransitionTask,
   shouldYield,
   createAbortController,
 } from '../.';
@@ -60,17 +60,17 @@ const controller = createAbortController();
 
 let count = 0;
 
-runIdleCallback(() => console.log('normal task 1 will be aborted'), {
+postTask(() => console.log('normal task 1 will be aborted'), {
   signal: controller.signal,
   effect: aborted => console.log('normal task 1 aborted value is', aborted),
 });
 
-runIdleCallback(() => console.log('normal task 2 will be aborted'), {
+postTask(() => console.log('normal task 2 will be aborted'), {
   signal: controller.signal,
   effect: aborted => console.log('normal task 2 aborted value is', aborted),
 });
 
-runIdleCallback(() => console.log('normal task 3 will be aborted'), {
+postTask(() => console.log('normal task 3 will be aborted'), {
   signal: controller.signal,
   effect: aborted => console.log('normal task 3 aborted value is', aborted),
   debugger: task => {
@@ -80,31 +80,29 @@ runIdleCallback(() => console.log('normal task 3 will be aborted'), {
 
 controller.abort();
 
-runTransitionIdleCallback(() => {
+postTransitionTask(() => {
   console.log('transition task wrapped sync task');
-  runSyncIdleCallback(() => {
+  postSyncTask(() => {
     console.log('sync task in transition task');
   });
 });
 
 transitionTaskList.forEach((_, index) =>
-  runTransitionIdleCallback(tick =>
+  postTransitionTask(tick =>
     console.log(`transition task ${index} performed`, tick),
   ),
 );
 
 normalTaskList.forEach((_, index) =>
-  runIdleCallback(tick => console.log(`normal task ${index} performed`, tick)),
+  postTask(tick => console.log(`normal task ${index} performed`, tick)),
 );
 
 syncTaskList.forEach((_, index) =>
-  runSyncIdleCallback(tick =>
-    console.log(`sync task ${index} performed`, tick),
-  ),
+  postSyncTask(tick => console.log(`sync task ${index} performed`, tick)),
 );
 
 function _exec() {
-  runTransitionIdleCallback(() => {
+  postTransitionTask(() => {
     let arr: RegExpExecArray | null = null;
     do {
       if (!(arr = reg.exec(str))) {
@@ -121,7 +119,7 @@ function _exec() {
 _exec();
 
 function _asyncExec(tasks: Array<() => Promise<void>>) {
-  runTransitionIdleCallback(async () => {
+  postTransitionTask(async () => {
     let current: (() => Promise<void>) | undefined = undefined;
     while (!shouldYield() && (current = tasks.pop())) {
       await current();
@@ -135,19 +133,16 @@ function _asyncExec(tasks: Array<() => Promise<void>>) {
 _asyncExec(asyncTasks.reverse());
 
 Promise.resolve().then(() =>
-  runIdleCallback(() => console.log('normal task in micro task.')),
+  postTask(() => console.log('normal task in micro task.')),
 );
 
-runIdleCallback(() => {
+postTask(() => {
   Promise.resolve().then(() => {
-    runIdleCallback(() => console.log('normal task in inner micro task.'));
+    postTask(() => console.log('normal task in inner micro task.'));
   });
 });
 
-setTimeout(
-  () => runIdleCallback(() => console.log('normal task in macro task.')),
-  0,
-);
+setTimeout(() => postTask(() => console.log('normal task in macro task.')), 0);
 
 function* gen() {
   yield Promise.resolve(1);
@@ -165,7 +160,7 @@ function co(gen: Generator<Promise<number>>) {
       }
       iter.value
         .then(value => {
-          runIdleCallback(() => {
+          postTask(() => {
             console.log('gen', value);
             next(gen.next(value));
           });
@@ -183,7 +178,7 @@ const checkbox = document.querySelector(
 ) as HTMLInputElement;
 
 document.querySelector('input[type="text"]')!.addEventListener('keydown', e => {
-  runSyncIdleCallback(() => {
+  postSyncTask(() => {
     if (checkbox.checked) {
       const current = performance.now();
       while (performance.now() - current < 100) {}
@@ -193,7 +188,7 @@ document.querySelector('input[type="text"]')!.addEventListener('keydown', e => {
       // @ts-ignore
       e.target.value || 'please enter';
   });
-  runTransitionIdleCallback(
+  postTransitionTask(
     () => {
       // @ts-ignore
       document.querySelector('.transition-p').innerText =

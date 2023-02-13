@@ -1,4 +1,4 @@
-import type { IScheduler } from './type';
+import { IScheduler } from './type';
 
 export const createDispatcher = (handler: () => void) => {
   const self = globalThis as typeof globalThis & { scheduler: IScheduler };

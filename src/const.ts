@@ -1,4 +1,4 @@
-import type { IOptions } from './type';
+import { IOptions } from './type';
 
 // lanes
 export const NoLanes = 0b0000000000000000000000000000000;
@@ -11,7 +11,8 @@ export const TransitionLane = 0b0000000000000000000000000000100;
 export const maxSigned31BitInt = 0b111111111111111111111111111111;
 
 // timeout
-export const SYNC_PRIORITY_TIMEOUT = -1; // 立即过期以获得最高优先级
+// 立即过期以获得最高优先级
+export const SYNC_PRIORITY_TIMEOUT = -1;
 export const NORMAL_PRIORITY_TIMEOUT = 50;
 export const TRANSITION_PRIORITY_TIMEOUT = maxSigned31BitInt;
 
