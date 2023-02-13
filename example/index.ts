@@ -2,21 +2,25 @@ import {
   postTask,
   postSyncTask,
   postTransitionTask,
+  unstable_postTask,
+  unstable_postSyncTask,
+  unstable_postTransitionTask,
   shouldYield,
   createAbortController,
 } from '../.';
 
-postTransitionTask(() => console.log(1));
+unstable_postTransitionTask(() => console.log(1));
 
-postTask(() => console.log(2));
+unstable_postTask(() => console.log(2));
 
-postSyncTask(() => console.log(3));
+unstable_postSyncTask(() => console.log(3));
 
-postTransitionTask(() => console.log('a'));
+unstable_postTransitionTask(() => console.log('a'));
 
-postTask(() => console.log('b'));
+unstable_postTask(() => console.log('b'));
 
-postSyncTask(() => console.log('c'));
+unstable_postSyncTask(() => console.log('c'));
+
 
 // new Worker(new URL('worker.js', import.meta.url), { type: 'module' });
 
