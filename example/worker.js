@@ -1,17 +1,18 @@
+// @ts-check
 import {
-  runIdleCallback,
-  runSyncIdleCallback,
-  runTransitionIdleCallback,
+  postTask,
+  postSyncTask,
+  postTransitionTask,
 } from '../.';
 
-runTransitionIdleCallback(() => {
+postTransitionTask(() => {
   console.log('transition task in worker');
 });
 
-runIdleCallback(() => {
+postTask(() => {
   console.log('normal task in worker');
 });
 
-runSyncIdleCallback(() => {
+postSyncTask(() => {
   console.log('sync task in worker');
 });

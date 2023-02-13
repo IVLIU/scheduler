@@ -12,7 +12,8 @@ export const createMinHeap = () => {
     shiftDown(0);
   }
   const peek = () => heap[0];
-  const swap = (index1: number, index2: number) => [heap[index2], heap[index1]] = [heap[index1], heap[index2]];
+  const swap = (index1: number, index2: number) => 
+    [heap[index2], heap[index1]] = [heap[index1], heap[index2]];
   const shiftUp = (index: number) => {
     if(index === 0) {
       return;

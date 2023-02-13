@@ -23,6 +23,12 @@ let _pendingTaskQueue: ITask | null = null;
 let _taskQueue: ITask | null = null;
 let _workInProgressTaskQueue: ITask | null = null;
 let _firstPendingLaneTask: ITask | null = null;
+let _firstSyncLaneTask: ITask | null = null;
+let _firstNormalLaneTask: ITask | null = null;
+let _firstTransitionLaneTask: ITask | null = null;
+let _currentSyncLaneTask: ITask | null = null;
+let _currentNormalLaneTask: ITask | null = null;
+let _currentTransitionLaneTask: ITask | null = null;
 let _remainingLanes = NoLanes;
 let _urgentScheduleLane = NoLane;
 let _scheduleLane = NoLane;
@@ -83,7 +89,7 @@ export const postTask = (
   callback: ITask['callback'],
   options: Partial<IOptions> = defaultOptions,
 ) => {
-  options = options === defaultOptions ? options : Object.assign(defaultOptions, options);
+  options = options === defaultOptions ? defaultOptions : { ...defaultOptions, ...options };
   const creationTick = getCurrentTick();
   const task = {
     callback,
@@ -96,16 +102,27 @@ export const postTask = (
     index: ++_index,
   } as ITask;
   if (options.sync) {
+    if(_firstSyncLaneTask === null) {
+      _firstSyncLaneTask = _currentSyncLaneTask = task;
+    }
     task.lane = ((_remainingLanes |= SyncLane), SyncLane);
     task.expirationTick = creationTick + SYNC_PRIORITY_TIMEOUT;
     task.expired = true;
   } else if (options.transition) {
+    if(_firstTransitionLaneTask === null) {
+      _firstTransitionLaneTask = _currentTransitionLaneTask = task;
+    }
     task.lane = ((_remainingLanes |= TransitionLane), TransitionLane);
-    task.expirationTick =
-      typeof options.transition === 'object' && options.transition.timeout >= 0
-        ? creationTick + options.transition.timeout
-        : TRANSITION_PRIORITY_TIMEOUT;
+    task.expirationTick = TRANSITION_PRIORITY_TIMEOUT;
+    // ! 暂时放弃支持自定义过期时间，需要小顶堆来支持过期任务的正确执行
+    // task.expirationTick =
+    //   typeof options.transition === 'object' && options.transition.timeout >= 0
+    //     ? creationTick + options.transition.timeout
+    //     : TRANSITION_PRIORITY_TIMEOUT;
   } else {
+    if(_firstNormalLaneTask === null) {
+      _firstNormalLaneTask = _currentNormalLaneTask = task;
+    }
     task.lane = ((_remainingLanes |= NormalLane), NormalLane);
     task.expirationTick = creationTick + NORMAL_PRIORITY_TIMEOUT;
   }
@@ -196,6 +213,33 @@ export const pushPendingTask = (task: ITask) => {
     lastPendingTask.nextLaneTask = firstPendingTask;
     firstPendingTask.prevLaneTask = lastPendingTask;
     _firstPendingLaneTask = lastPendingTask;
+    if(lastPendingTask !== _currentSyncLaneTask && (taskLane & SyncLane) === SyncLane) {
+      const firstSyncLaneTask = _firstSyncLaneTask!;
+      const currentSyncLaneTask = _currentSyncLaneTask!;
+      currentSyncLaneTask.nextSameLaneTask = lastPendingTask;
+      lastPendingTask.prevSameLaneTask = currentSyncLaneTask;
+      lastPendingTask.nextSameLaneTask = firstSyncLaneTask;
+      firstSyncLaneTask.prevSameLaneTask = lastPendingTask;
+      _currentSyncLaneTask = lastPendingTask;
+    }
+    if(task !== _currentNormalLaneTask && (taskLane & NormalLane) === NormalLane) {
+      const firstNormalLaneTask = _firstNormalLaneTask!;
+      const currentNormalLaneTask = _currentNormalLaneTask!;
+      currentNormalLaneTask.nextSameLaneTask = lastPendingTask
+      lastPendingTask.prevSameLaneTask = currentNormalLaneTask;
+      lastPendingTask.nextSameLaneTask = firstNormalLaneTask;
+      firstNormalLaneTask.prevSameLaneTask = lastPendingTask;
+      _currentNormalLaneTask = task;
+    }
+    if(task !== _currentTransitionLaneTask && (taskLane & TransitionLane) === TransitionLane) {
+      const firstTransitionLaneTask = _firstTransitionLaneTask!;
+      const currentTransitionLaneTask = _currentTransitionLaneTask!;
+      currentTransitionLaneTask.nextSameLaneTask = lastPendingTask;
+      lastPendingTask.prevSameLaneTask = currentTransitionLaneTask;
+      lastPendingTask.nextSameLaneTask = firstTransitionLaneTask;
+      firstTransitionLaneTask.prevSameLaneTask = lastPendingTask;
+      _currentTransitionLaneTask = task;
+    }
     _pendingLane = taskLane;
   }
 };
@@ -309,6 +353,10 @@ export const popWorkInProgressTask = () => {
   firstWorkInProgressTask.prevLaneTask = null;
   // @ts-ignore
   firstWorkInProgressTask.nextLaneTask = null;
+  // @ts-ignore
+  firstWorkInProgressTask.prevSameLaneTask = null;
+  // @ts-ignore
+  firstWorkInProgressTask.nextSameLaneTask = null;
   return firstWorkInProgressTask;
 };
 
