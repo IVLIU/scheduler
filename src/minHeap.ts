@@ -4,7 +4,7 @@ export const createMinHeap = () => {
   const heap = [] as ITask[];
   const push = (task: ITask) => {
     heap.push(task);
-    shiftUp(heap.length - 1);
+    shiftUp(task.sortIndex = heap.length - 1);
   }
   const pop = () => {
     swap(0, heap.length - 1);
@@ -12,8 +12,11 @@ export const createMinHeap = () => {
     shiftDown(0);
   }
   const peek = () => heap[0];
-  const swap = (index1: number, index2: number) => 
+  const swap = (index1: number, index2: number) => {
     [heap[index2], heap[index1]] = [heap[index1], heap[index2]];
+    heap[index1].sortIndex = index1;
+    heap[index2].sortIndex = index2; 
+  };
   const shiftUp = (index: number) => {
     if(index === 0) {
       return;

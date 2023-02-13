@@ -1,5 +1,6 @@
 export interface ITask {
   index: number;
+  sortIndex: number;
   lane: number;
   /** 创建时间 */
   creationTick: number;

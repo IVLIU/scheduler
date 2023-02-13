@@ -1,4 +1,5 @@
 import { createDispatcher } from "./createDispatcher";
+import { createMinHeap } from "./minHeap";
 import { runMicroTaskCallback } from "./runMicroTaskCallback";
 import { scheduleInWorker } from "./scheduleInWorker";
 import { getCurrentTick } from "./getCurrentTick";
@@ -18,6 +19,7 @@ import {
 } from "./const";
 import { ITask, IOptions } from "./type";
 
+const { push, pop, peek } = createMinHeap();
 const _yieldInterval = 5;
 let _pendingTaskQueue: ITask | null = null;
 let _taskQueue: ITask | null = null;
@@ -124,13 +126,14 @@ export const postTask = (
     if (_firstTransitionLaneTask === null) {
       _firstTransitionLaneTask = _currentTransitionLaneTask = task;
     }
+    if(typeof options.transition === 'object' && options.transition.timeout >= 0) {
+      push(task);
+    }
     task.lane = ((_remainingLanes |= TransitionLane), TransitionLane);
-    task.expirationTick = TRANSITION_PRIORITY_TIMEOUT;
-    // ! 暂时放弃支持自定义过期时间，需要小顶堆来支持过期任务的正确执行
-    // task.expirationTick =
-    //   typeof options.transition === 'object' && options.transition.timeout >= 0
-    //     ? creationTick + options.transition.timeout
-    //     : TRANSITION_PRIORITY_TIMEOUT;
+    task.expirationTick =
+      typeof options.transition === 'object' && options.transition.timeout >= 0
+        ? creationTick + options.transition.timeout
+        : TRANSITION_PRIORITY_TIMEOUT;
   } else {
     if (_firstNormalLaneTask === null) {
       _firstNormalLaneTask = _currentNormalLaneTask = task;
@@ -306,8 +309,13 @@ export const getFirstTask = () => {
 };
 
 export const requestWorkInProgressTaskQueue = (tick: number) => {
+  const firstTimerTask = peek();
   _workInProgressTaskQueue = null;
+  if(firstTimerTask && (firstTimerTask.expired || (firstTimerTask.expired = firstTimerTask.expirationTick < tick))) {
+    _workInProgressTaskQueue = firstTimerTask.prev;
+  }
   if (
+    _workInProgressTaskQueue === null &&
     _firstTransitionLaneTask &&
     (_firstTransitionLaneTask.expired ||
       (_firstTransitionLaneTask.expired =
@@ -342,6 +350,9 @@ export const popWorkInProgressTask = () => {
   }
   const lastWorkInProgressTask = _workInProgressTaskQueue;
   const firstWorkInProgressTask = lastWorkInProgressTask.next;
+  if(typeof firstWorkInProgressTask.sortIndex === 'number') {
+    pop();
+  }
   if (lastWorkInProgressTask === firstWorkInProgressTask) {
     _taskQueue =
       _workInProgressTaskQueue =

@@ -7,6 +7,12 @@ export {
   postTransitionTask as runTransitionIdleCallback,
 } from './scheduler';
 
+export {
+  postTask as unstable_postTask,
+  postSyncTask as unstable_postSyncTask,
+  postTransitionTask as unstable_postTransitionTask,
+} from './scheduler.unstable';
+
 export { shouldYield } from './shouldYield';
 
 export { createAbortController } from './createAbortController';
