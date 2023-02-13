@@ -1,10 +1,10 @@
-import { createDispatcher } from "./createDispatcher";
-import { createMinHeap } from "./minHeap";
-import { runMicroTaskCallback } from "./runMicroTaskCallback";
-import { scheduleInWorker } from "./scheduleInWorker";
-import { getCurrentTick } from "./getCurrentTick";
-import { isInputPending } from "./isInputPending";
-import { warn } from "./warn";
+import { createDispatcher } from './createDispatcher';
+import { createMinHeap } from './minHeap';
+import { runMicroTaskCallback } from './runMicroTaskCallback';
+import { scheduleInWorker } from './scheduleInWorker';
+import { getCurrentTick } from './getCurrentTick';
+import { isInputPending } from './isInputPending';
+import { warn } from './warn';
 import {
   NoLanes,
   NoLane,
@@ -16,8 +16,8 @@ import {
   TRANSITION_PRIORITY_TIMEOUT,
   __DEV__,
   defaultOptions,
-} from "./const";
-import { ITask, IOptions } from "./type";
+} from './const';
+import { ITask, IOptions } from './type';
 
 const { push, pop, peek } = createMinHeap();
 const _yieldInterval = 5;
@@ -97,8 +97,8 @@ export const workLoop = () => {
 export const dispatch = createDispatcher(workLoop);
 
 export const postTask = (
-  callback: ITask["callback"],
-  options: Partial<IOptions> = defaultOptions
+  callback: ITask['callback'],
+  options: Partial<IOptions> = defaultOptions,
 ) => {
   options =
     options === defaultOptions
@@ -126,7 +126,10 @@ export const postTask = (
     if (_firstTransitionLaneTask === null) {
       _firstTransitionLaneTask = _currentTransitionLaneTask = task;
     }
-    if(typeof options.transition === 'object' && options.transition.timeout >= 0) {
+    if (
+      typeof options.transition === 'object' &&
+      options.transition.timeout >= 0
+    ) {
       push(task);
     }
     task.lane = ((_remainingLanes |= TransitionLane), TransitionLane);
@@ -156,20 +159,20 @@ export const postTask = (
 };
 
 export const postSyncTask = (
-  callback: ITask["callback"],
-  options: Partial<Omit<IOptions, "sync" | "transition">> = {
+  callback: ITask['callback'],
+  options: Partial<Omit<IOptions, 'sync' | 'transition'>> = {
     signal: null,
     effect: null,
-  }
+  },
 ) => postTask(callback, { ...options, sync: true });
 
 export const postTransitionTask = (
-  callback: ITask["callback"],
-  options: Partial<Omit<IOptions, "sync">> = {
+  callback: ITask['callback'],
+  options: Partial<Omit<IOptions, 'sync'>> = {
     transition: true,
     signal: null,
     effect: null,
-  }
+  },
 ) => postTask(callback, { transition: true, ...options });
 
 export const schedule = () =>
@@ -193,10 +196,10 @@ export const schedule = () =>
       dispatch({
         priority:
           (lane & SyncLane) === SyncLane
-            ? "user-blocking"
+            ? 'user-blocking'
             : (lane & TransitionLane) === TransitionLane
-            ? "background"
-            : "user-visible",
+            ? 'background'
+            : 'user-visible',
       });
     }
     _needSchedule = false;
@@ -311,7 +314,11 @@ export const getFirstTask = () => {
 export const requestWorkInProgressTaskQueue = (tick: number) => {
   const firstTimerTask = peek();
   _workInProgressTaskQueue = null;
-  if(firstTimerTask && (firstTimerTask.expired || (firstTimerTask.expired = firstTimerTask.expirationTick < tick))) {
+  if (
+    firstTimerTask &&
+    (firstTimerTask.expired ||
+      (firstTimerTask.expired = firstTimerTask.expirationTick < tick))
+  ) {
     _workInProgressTaskQueue = firstTimerTask.prev;
   }
   if (
@@ -350,19 +357,11 @@ export const popWorkInProgressTask = () => {
   }
   const lastWorkInProgressTask = _workInProgressTaskQueue;
   const firstWorkInProgressTask = lastWorkInProgressTask.next;
-  if(typeof firstWorkInProgressTask.sortIndex === 'number') {
+  if (typeof firstWorkInProgressTask.sortIndex === 'number') {
     pop();
   }
   if (lastWorkInProgressTask === firstWorkInProgressTask) {
-    _taskQueue =
-      _workInProgressTaskQueue =
-      _firstSyncLaneTask =
-      _firstNormalLaneTask =
-      _firstTransitionLaneTask =
-      _currentSyncLaneTask =
-      _currentNormalLaneTask =
-      _currentTransitionLaneTask =
-        null;
+    _taskQueue = _workInProgressTaskQueue = _firstSyncLaneTask = _firstNormalLaneTask = _firstTransitionLaneTask = _currentSyncLaneTask = _currentNormalLaneTask = _currentTransitionLaneTask = null;
   } else {
     const currentLane = firstWorkInProgressTask.lane;
     const nextFirstWorkInProgressTask = firstWorkInProgressTask.next;
