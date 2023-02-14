@@ -2,6 +2,9 @@ import {
   postTask,
   postSyncTask,
   postTransitionTask,
+  // unstable_postTask,
+  // unstable_postSyncTask,
+  // unstable_postTransitionTask,
   shouldYield,
   createAbortController,
 } from '../.';
@@ -57,8 +60,6 @@ const str =
 const reg = new RegExp('(react(-[a-z]+)?|vue(-[a-z]+)?|angular)', 'g');
 
 const controller = createAbortController();
-
-let count = 0;
 
 postTask(() => console.log('normal task 1 will be aborted'), {
   signal: controller.signal,
