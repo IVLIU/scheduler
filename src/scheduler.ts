@@ -1,4 +1,5 @@
 import { createDispatcher } from './createDispatcher';
+import { createMinHeap } from './minHeap';
 import { runMicroTaskCallback } from './runMicroTaskCallback';
 import { scheduleInWorker } from './scheduleInWorker';
 import { getCurrentTick } from './getCurrentTick';
@@ -18,6 +19,7 @@ import {
 } from './const';
 import { ITask, IOptions } from './type';
 
+const { push, pop, peek } = createMinHeap();
 const _yieldInterval = 5;
 let _pendingTaskQueue: ITask | null = null;
 let _taskQueue: ITask | null = null;
@@ -102,11 +104,15 @@ export const postTask = (
     task.expirationTick = creationTick + SYNC_PRIORITY_TIMEOUT;
     task.expired = true;
   } else if (options.transition) {
-    task.lane = ((_remainingLanes |= TransitionLane), TransitionLane);
-    task.expirationTick =
+    const timeout =
       typeof options.transition === 'object' && options.transition.timeout >= 0
         ? creationTick + options.transition.timeout
         : TRANSITION_PRIORITY_TIMEOUT;
+    if (timeout < TRANSITION_PRIORITY_TIMEOUT) {
+      push(task);
+    }
+    task.lane = ((_remainingLanes |= TransitionLane), TransitionLane);
+    task.expirationTick = timeout;
   } else {
     task.lane = ((_remainingLanes |= NormalLane), NormalLane);
     task.expirationTick = creationTick + NORMAL_PRIORITY_TIMEOUT;
@@ -149,12 +155,12 @@ export const schedule = () =>
       if ((_remainingLanes & -_remainingLanes) === NoLane) {
         const lastTask = _taskQueue;
         const firstTask = lastTask.next;
-        if (firstTask.nextLaneTask === null) {
+        if (!firstTask.nextLaneTask) {
           _remainingLanes |= firstTask.lane;
         } else {
           let task = firstTask;
           do {
-            if (task === null) {
+            if (!task) {
               break;
             }
             _remainingLanes |= task.lane;
@@ -263,27 +269,36 @@ export const getFirstTask = () => {
 };
 
 export const requestWorkInProgressTaskQueue = (tick: number) => {
+  const firstTimerTask = peek();
   const firstTask = getFirstTask();
   let task = firstTask;
   let expiredTaskQueue: ITask | null = null;
   let workInProgressTaskQueue: ITask | null = null;
   _workInProgressTaskQueue = null;
-  do {
-    if (!task) {
-      break;
-    }
-    if (task.expired || tick > task.expirationTick) {
-      expiredTaskQueue = task.prev;
-      break;
-    }
-    if (
-      workInProgressTaskQueue === null &&
-      (task.lane & _scheduleLane) === _scheduleLane
-    ) {
-      workInProgressTaskQueue = task.prev;
-    }
-    task = task.nextLaneTask;
-  } while (task !== firstTask);
+  if (
+    firstTimerTask &&
+    (firstTimerTask.expired ||
+      (firstTimerTask.expired = firstTimerTask.expirationTick < tick))
+  ) {
+    expiredTaskQueue = firstTimerTask.prev;
+  } else {
+    do {
+      if (!task) {
+        break;
+      }
+      if (task.expired || (task.expired = task.expirationTick < tick)) {
+        expiredTaskQueue = task.prev;
+        break;
+      }
+      if (
+        workInProgressTaskQueue === null &&
+        (task.lane & _scheduleLane) === _scheduleLane
+      ) {
+        workInProgressTaskQueue = task.prev;
+      }
+      task = task.nextLaneTask;
+    } while (task !== firstTask);
+  }
   if (
     (_workInProgressTaskQueue = expiredTaskQueue || workInProgressTaskQueue)
   ) {
@@ -297,6 +312,9 @@ export const popWorkInProgressTask = () => {
   }
   const lastWorkInProgressTask = _workInProgressTaskQueue;
   const firstWorkInProgressTask = lastWorkInProgressTask.next;
+  if (typeof firstWorkInProgressTask.sortIndex === 'number') {
+    pop();
+  }
   if (lastWorkInProgressTask === firstWorkInProgressTask) {
     _taskQueue = _workInProgressTaskQueue = _currentLaneTask = null;
   } else {

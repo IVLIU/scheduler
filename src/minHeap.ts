@@ -4,7 +4,7 @@ export const createMinHeap = () => {
   const heap = [] as ITask[];
   const push = (task: ITask) => {
     heap.push(task);
-    shiftUp(heap.length - 1);
+    shiftUp((task.sortIndex = heap.length - 1));
   };
   const pop = () => {
     swap(0, heap.length - 1);
