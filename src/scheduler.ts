@@ -149,11 +149,14 @@ export const schedule = () =>
       if ((_remainingLanes & -_remainingLanes) === NoLane) {
         const lastTask = _taskQueue;
         const firstTask = lastTask.next;
-        if (!firstTask.nextLaneTask) {
+        if (firstTask.nextLaneTask === null) {
           _remainingLanes |= firstTask.lane;
         } else {
           let task = firstTask;
           do {
+            if (task === null) {
+              break;
+            }
             _remainingLanes |= task.lane;
             task = task.nextLaneTask;
           } while (task !== firstTask);
@@ -328,6 +331,7 @@ export const popWorkInProgressTask = () => {
   firstWorkInProgressTask.prevLaneTask = null;
   // @ts-ignore
   firstWorkInProgressTask.nextLaneTask = null;
+  firstWorkInProgressTask.deprecated = true;
   return firstWorkInProgressTask;
 };
 

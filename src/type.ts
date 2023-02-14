@@ -12,6 +12,7 @@ export interface ITask {
   debugger: ((task: ITask) => void) | null;
   signal: AbortSignal | null;
   expired: boolean;
+  deprecated: boolean;
   prev: ITask;
   next: ITask;
   prevLaneTask: ITask;

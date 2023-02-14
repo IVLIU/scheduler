@@ -6,213 +6,201 @@ import {
   createAbortController,
 } from '../.';
 
-postSyncTask(() => {});
-postTask(() => {});
+new Worker(new URL('worker.js', import.meta.url), { type: 'module' });
 
-setTimeout(() => {
-  postSyncTask(() => {});
-  postTask(() => {});
-}, 0);
+const transitionTaskList = Array.from({ length: 5 });
 
-setTimeout(() => {
-  postTask(() => {});
-  postTask(() => {});
-}, 0);
+const normalTaskList = Array.from({ length: 5 });
 
-// new Worker(new URL('worker.js', import.meta.url), { type: 'module' });
+const syncTaskList = Array.from({ length: 5 });
 
-// const transitionTaskList = Array.from({ length: 5 });
+const asyncTasks = [
+  () =>
+    new Promise<void>(r =>
+      setTimeout(() => {
+        console.log('async 1');
+        r();
+      }, 3),
+    ),
+  () =>
+    new Promise<void>(r =>
+      setTimeout(() => {
+        console.log('async 2');
+        r();
+      }, 5),
+    ),
+  () =>
+    new Promise<void>(r =>
+      setTimeout(() => {
+        console.log('async 3');
+        r();
+      }, 2),
+    ),
+  () =>
+    new Promise<void>(r =>
+      setTimeout(() => {
+        console.log('async 4');
+        r();
+      }, 1),
+    ),
+  () =>
+    new Promise<void>(r =>
+      setTimeout(() => {
+        console.log('async 5');
+        r();
+      }, 4),
+    ),
+];
 
-// const normalTaskList = Array.from({ length: 5 });
+const str =
+  'react react-dom react-native react-redux react-router vue vue-router angular';
+const reg = new RegExp('(react(-[a-z]+)?|vue(-[a-z]+)?|angular)', 'g');
 
-// const syncTaskList = Array.from({ length: 5 });
+const controller = createAbortController();
 
-// const asyncTasks = [
-//   () =>
-//     new Promise<void>(r =>
-//       setTimeout(() => {
-//         console.log('async 1');
-//         r();
-//       }, 3),
-//     ),
-//   () =>
-//     new Promise<void>(r =>
-//       setTimeout(() => {
-//         console.log('async 2');
-//         r();
-//       }, 5),
-//     ),
-//   () =>
-//     new Promise<void>(r =>
-//       setTimeout(() => {
-//         console.log('async 3');
-//         r();
-//       }, 2),
-//     ),
-//   () =>
-//     new Promise<void>(r =>
-//       setTimeout(() => {
-//         console.log('async 4');
-//         r();
-//       }, 1),
-//     ),
-//   () =>
-//     new Promise<void>(r =>
-//       setTimeout(() => {
-//         console.log('async 5');
-//         r();
-//       }, 4),
-//     ),
-// ];
+let count = 0;
 
-// const str =
-//   'react react-dom react-native react-redux react-router vue vue-router angular';
-// const reg = new RegExp('(react(-[a-z]+)?|vue(-[a-z]+)?|angular)', 'g');
+postTask(() => console.log('normal task 1 will be aborted'), {
+  signal: controller.signal,
+  effect: aborted => console.log('normal task 1 aborted value is', aborted),
+});
 
-// const controller = createAbortController();
+postTask(() => console.log('normal task 2 will be aborted'), {
+  signal: controller.signal,
+  effect: aborted => console.log('normal task 2 aborted value is', aborted),
+});
 
-// let count = 0;
+postTask(() => console.log('normal task 3 will be aborted'), {
+  signal: controller.signal,
+  effect: aborted => console.log('normal task 3 aborted value is', aborted),
+  debugger: task => {
+    console.log('debugger task is', task);
+  },
+});
 
-// runIdleCallback(() => console.log('normal task 1 will be aborted'), {
-//   signal: controller.signal,
-//   effect: aborted => console.log('normal task 1 aborted value is', aborted),
-// });
+controller.abort();
 
-// runIdleCallback(() => console.log('normal task 2 will be aborted'), {
-//   signal: controller.signal,
-//   effect: aborted => console.log('normal task 2 aborted value is', aborted),
-// });
+postTransitionTask(() => {
+  console.log('transition task wrapped sync task');
+  postSyncTask(() => {
+    console.log('sync task in transition task');
+  });
+});
 
-// runIdleCallback(() => console.log('normal task 3 will be aborted'), {
-//   signal: controller.signal,
-//   effect: aborted => console.log('normal task 3 aborted value is', aborted),
-//   debugger: task => {
-//     console.log('debugger task is', task);
-//   },
-// });
+transitionTaskList.forEach((_, index) =>
+  postTransitionTask(tick =>
+    console.log(`transition task ${index} performed`, tick),
+  ),
+);
 
-// controller.abort();
+normalTaskList.forEach((_, index) =>
+  postTask(tick => console.log(`normal task ${index} performed`, tick)),
+);
 
-// runTransitionIdleCallback(() => {
-//   console.log('transition task wrapped sync task');
-//   runSyncIdleCallback(() => {
-//     console.log('sync task in transition task');
-//   });
-// });
+syncTaskList.forEach((_, index) =>
+  postSyncTask(tick => console.log(`sync task ${index} performed`, tick)),
+);
 
-// transitionTaskList.forEach((_, index) =>
-//   runTransitionIdleCallback(tick =>
-//     console.log(`transition task ${index} performed`, tick),
-//   ),
-// );
+function _exec() {
+  postTransitionTask(() => {
+    let arr: RegExpExecArray | null = null;
+    do {
+      if (!(arr = reg.exec(str))) {
+        break;
+      }
+      console.log(`the matched is ${arr[1]}`);
+    } while (arr && !shouldYield());
+    if (arr) {
+      _exec();
+    }
+  });
+}
 
-// normalTaskList.forEach((_, index) =>
-//   runIdleCallback(tick => console.log(`normal task ${index} performed`, tick)),
-// );
+_exec();
 
-// syncTaskList.forEach((_, index) =>
-//   runSyncIdleCallback(tick =>
-//     console.log(`sync task ${index} performed`, tick),
-//   ),
-// );
+function _asyncExec(tasks: Array<() => Promise<void>>) {
+  postTransitionTask(async () => {
+    let current: (() => Promise<void>) | undefined = undefined;
+    while (!shouldYield() && (current = tasks.pop())) {
+      await current();
+    }
+    if (tasks.length) {
+      _asyncExec(tasks);
+    }
+  });
+}
 
-// function _exec() {
-//   runTransitionIdleCallback(() => {
-//     let arr: RegExpExecArray | null = null;
-//     do {
-//       if (!(arr = reg.exec(str))) {
-//         break;
-//       }
-//       console.log(`the matched is ${arr[1]}`);
-//     } while (arr && !shouldYield());
-//     if (arr) {
-//       _exec();
-//     }
-//   });
-// }
+_asyncExec(asyncTasks.reverse());
 
-// _exec();
+Promise.resolve().then(() =>
+  postTask(() => console.log('normal task in micro task.')),
+);
 
-// function _asyncExec(tasks: Array<() => Promise<void>>) {
-//   runTransitionIdleCallback(async () => {
-//     let current: (() => Promise<void>) | undefined = undefined;
-//     while (!shouldYield() && (current = tasks.pop())) {
-//       await current();
-//     }
-//     if (tasks.length) {
-//       _asyncExec(tasks);
-//     }
-//   });
-// }
+postTask(() => {
+  Promise.resolve().then(() => {
+    postTask(() => console.log('normal task in inner micro task.'));
+  });
+});
 
-// _asyncExec(asyncTasks.reverse());
+setTimeout(() => postTask(() => console.log('normal task in macro task.')), 0);
 
-// Promise.resolve().then(() =>
-//   runIdleCallback(() => console.log('normal task in micro task.')),
-// );
+function* gen() {
+  yield Promise.resolve(1);
+  yield Promise.resolve(2);
+  yield Promise.resolve(3);
+  yield Promise.resolve(4);
+  yield Promise.resolve(5);
+}
 
-// runIdleCallback(() => {
-//   Promise.resolve().then(() => {
-//     runIdleCallback(() => console.log('normal task in inner micro task.'));
-//   });
-// });
+function co(gen: Generator<Promise<number>>) {
+  return new Promise((resolve, reject) => {
+    function next(iter: IteratorResult<Promise<number>>) {
+      if (iter.done) {
+        return resolve(iter.value);
+      }
+      iter.value
+        .then(value => {
+          postTask(() => {
+            console.log('gen', value);
+            next(gen.next(value));
+          });
+        })
+        .catch(err => reject(gen.throw(err)));
+    }
+    next(gen.next());
+  });
+}
 
-// setTimeout(
-//   () => runIdleCallback(() => console.log('normal task in macro task.')),
-//   0,
-// );
+co(gen());
 
-// function* gen() {
-//   yield Promise.resolve(1);
-//   yield Promise.resolve(2);
-//   yield Promise.resolve(3);
-//   yield Promise.resolve(4);
-//   yield Promise.resolve(5);
-// }
+const checkbox = document.querySelector(
+  'input[type="checkbox"]',
+) as HTMLInputElement;
 
-// function co(gen: Generator<Promise<number>>) {
-//   return new Promise((resolve, reject) => {
-//     function next(iter: IteratorResult<Promise<number>>) {
-//       if (iter.done) {
-//         return resolve(iter.value);
-//       }
-//       iter.value
-//         .then(value => {
-//           runIdleCallback(() => {
-//             console.log('gen', value);
-//             next(gen.next(value));
-//           });
-//         })
-//         .catch(err => reject(gen.throw(err)));
-//     }
-//     next(gen.next());
-//   });
-// }
+let ac: AbortController;
 
-// co(gen());
-
-// const checkbox = document.querySelector(
-//   'input[type="checkbox"]',
-// ) as HTMLInputElement;
-
-// document.querySelector('input[type="text"]')!.addEventListener('keydown', e => {
-//   runSyncIdleCallback(() => {
-//     if (checkbox.checked) {
-//       const current = performance.now();
-//       while (performance.now() - current < 100) {}
-//     }
-//     // @ts-ignore
-//     document.querySelector('.sync-p').innerText =
-//       // @ts-ignore
-//       e.target.value || 'please enter';
-//   });
-//   runTransitionIdleCallback(
-//     () => {
-//       // @ts-ignore
-//       document.querySelector('.transition-p').innerText =
-//         // @ts-ignore
-//         e.target.value || 'please enter';
-//     },
-//     { transition: { timeout: 1000 } },
-//   );
-// });
+document.querySelector('input[type="text"]')!.addEventListener('keydown', e => {
+  if (ac) {
+    ac.abort();
+  }
+  ac = new AbortController();
+  postSyncTask(() => {
+    if (checkbox.checked) {
+      const current = performance.now();
+      while (performance.now() - current < 100) {}
+    }
+    // @ts-ignore
+    document.querySelector('.sync-p').innerText =
+      // @ts-ignore
+      e.target.value || 'please enter';
+  });
+  postTransitionTask(
+    () => {
+      // @ts-ignore
+      document.querySelector('.transition-p').innerText =
+        // @ts-ignore
+        e.target.value || 'please enter';
+    },
+    { transition: { timeout: 1000 }, signal: ac.signal },
+  );
+});
