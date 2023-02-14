@@ -177,7 +177,13 @@ const checkbox = document.querySelector(
   'input[type="checkbox"]',
 ) as HTMLInputElement;
 
+let ac: AbortController;
+
 document.querySelector('input[type="text"]')!.addEventListener('keydown', e => {
+  if (ac) {
+    ac.abort();
+  }
+  ac = new AbortController();
   postSyncTask(() => {
     if (checkbox.checked) {
       const current = performance.now();
@@ -195,6 +201,6 @@ document.querySelector('input[type="text"]')!.addEventListener('keydown', e => {
         // @ts-ignore
         e.target.value || 'please enter';
     },
-    { transition: { timeout: 1000 } },
+    { transition: { timeout: 1000 }, signal: ac.signal },
   );
 });

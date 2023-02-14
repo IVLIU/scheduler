@@ -24,13 +24,8 @@ const _yieldInterval = 5;
 let _pendingTaskQueue: ITask | null = null;
 let _taskQueue: ITask | null = null;
 let _workInProgressTaskQueue: ITask | null = null;
-let _firstPendingLaneTask: ITask | null = null;
-let _firstSyncLaneTask: ITask | null = null;
-let _firstNormalLaneTask: ITask | null = null;
-let _firstTransitionLaneTask: ITask | null = null;
-let _currentSyncLaneTask: ITask | null = null;
-let _currentNormalLaneTask: ITask | null = null;
-let _currentTransitionLaneTask: ITask | null = null;
+let _currentPendingLaneTask: ITask | null = null;
+let _currentLaneTask: ITask | null = null;
 let _remainingLanes = NoLanes;
 let _urgentScheduleLane = NoLane;
 let _scheduleLane = NoLane;
@@ -74,15 +69,6 @@ export const workLoop = () => {
       scheduleInWorker() ? true : !isInputPending() && tick < frameDeadTick
     );
     if (task === null) {
-      if ((_scheduleLane & SyncLane) === SyncLane) {
-        _firstSyncLaneTask = _currentSyncLaneTask = null;
-      }
-      if ((_scheduleLane & NormalLane) === NormalLane) {
-        _firstNormalLaneTask = _currentNormalLaneTask = null;
-      }
-      if ((_scheduleLane & TransitionLane) === TransitionLane) {
-        _firstTransitionLaneTask = _currentTransitionLaneTask = null;
-      }
       _remainingLanes &= ~_scheduleLane;
     }
     if (_taskQueue !== null) {
@@ -101,9 +87,7 @@ export const postTask = (
   options: Partial<IOptions> = defaultOptions,
 ) => {
   options =
-    options === defaultOptions
-      ? defaultOptions
-      : { ...defaultOptions, ...options };
+    options === defaultOptions ? options : { ...defaultOptions, ...options };
   const creationTick = getCurrentTick();
   const task = {
     callback,
@@ -116,31 +100,20 @@ export const postTask = (
     index: ++_index,
   } as ITask;
   if (options.sync) {
-    if (_firstSyncLaneTask === null) {
-      _firstSyncLaneTask = _currentSyncLaneTask = task;
-    }
     task.lane = ((_remainingLanes |= SyncLane), SyncLane);
     task.expirationTick = creationTick + SYNC_PRIORITY_TIMEOUT;
     task.expired = true;
   } else if (options.transition) {
-    if (_firstTransitionLaneTask === null) {
-      _firstTransitionLaneTask = _currentTransitionLaneTask = task;
-    }
-    if (
-      typeof options.transition === 'object' &&
-      options.transition.timeout >= 0
-    ) {
-      push(task);
-    }
-    task.lane = ((_remainingLanes |= TransitionLane), TransitionLane);
-    task.expirationTick =
+    const timeout =
       typeof options.transition === 'object' && options.transition.timeout >= 0
         ? creationTick + options.transition.timeout
         : TRANSITION_PRIORITY_TIMEOUT;
-  } else {
-    if (_firstNormalLaneTask === null) {
-      _firstNormalLaneTask = _currentNormalLaneTask = task;
+    if (timeout < TRANSITION_PRIORITY_TIMEOUT) {
+      push(task);
     }
+    task.lane = ((_remainingLanes |= TransitionLane), TransitionLane);
+    task.expirationTick = timeout;
+  } else {
     task.lane = ((_remainingLanes |= NormalLane), NormalLane);
     task.expirationTick = creationTick + NORMAL_PRIORITY_TIMEOUT;
   }
@@ -187,6 +160,9 @@ export const schedule = () =>
         } else {
           let task = firstTask;
           do {
+            if (!task) {
+              break;
+            }
             _remainingLanes |= task.lane;
             task = task.nextLaneTask;
           } while (task !== firstTask);
@@ -222,50 +198,14 @@ export const pushPendingTask = (task: ITask) => {
   if ((taskLane & _pendingLane) === NoLane) {
     const lastPendingTask = _pendingTaskQueue;
     const firstPendingTask = lastPendingTask.next;
-    if (_firstPendingLaneTask === null) {
-      _firstPendingLaneTask = firstPendingTask;
+    if (_currentPendingLaneTask === null) {
+      _currentPendingLaneTask = firstPendingTask;
     }
-    _firstPendingLaneTask.nextLaneTask = lastPendingTask;
-    lastPendingTask.prevLaneTask = _firstPendingLaneTask;
+    _currentPendingLaneTask.nextLaneTask = lastPendingTask;
+    lastPendingTask.prevLaneTask = _currentPendingLaneTask;
     lastPendingTask.nextLaneTask = firstPendingTask;
     firstPendingTask.prevLaneTask = lastPendingTask;
-    _firstPendingLaneTask = lastPendingTask;
-    if (
-      lastPendingTask !== _currentSyncLaneTask &&
-      (taskLane & SyncLane) === SyncLane
-    ) {
-      const firstSyncLaneTask = _firstSyncLaneTask!;
-      const currentSyncLaneTask = _currentSyncLaneTask!;
-      currentSyncLaneTask.nextSameLaneTask = lastPendingTask;
-      lastPendingTask.prevSameLaneTask = currentSyncLaneTask;
-      lastPendingTask.nextSameLaneTask = firstSyncLaneTask;
-      firstSyncLaneTask.prevSameLaneTask = lastPendingTask;
-      _currentSyncLaneTask = lastPendingTask;
-    }
-    if (
-      task !== _currentNormalLaneTask &&
-      (taskLane & NormalLane) === NormalLane
-    ) {
-      const firstNormalLaneTask = _firstNormalLaneTask!;
-      const currentNormalLaneTask = _currentNormalLaneTask!;
-      currentNormalLaneTask.nextSameLaneTask = lastPendingTask;
-      lastPendingTask.prevSameLaneTask = currentNormalLaneTask;
-      lastPendingTask.nextSameLaneTask = firstNormalLaneTask;
-      firstNormalLaneTask.prevSameLaneTask = lastPendingTask;
-      _currentNormalLaneTask = task;
-    }
-    if (
-      task !== _currentTransitionLaneTask &&
-      (taskLane & TransitionLane) === TransitionLane
-    ) {
-      const firstTransitionLaneTask = _firstTransitionLaneTask!;
-      const currentTransitionLaneTask = _currentTransitionLaneTask!;
-      currentTransitionLaneTask.nextSameLaneTask = lastPendingTask;
-      lastPendingTask.prevSameLaneTask = currentTransitionLaneTask;
-      lastPendingTask.nextSameLaneTask = firstTransitionLaneTask;
-      firstTransitionLaneTask.prevSameLaneTask = lastPendingTask;
-      _currentTransitionLaneTask = task;
-    }
+    _currentPendingLaneTask = lastPendingTask;
     _pendingLane = taskLane;
   }
 };
@@ -276,30 +216,47 @@ export const pushTask = () => {
   }
   if (_taskQueue === null) {
     _taskQueue = _pendingTaskQueue;
+    _currentLaneTask = _currentPendingLaneTask;
     _pendingTaskQueue = null;
-    _firstPendingLaneTask = null;
+    _currentPendingLaneTask = null;
     return;
   }
   const lastTask = _taskQueue;
   const firstTask = lastTask.next;
   const lastPendingTask = _pendingTaskQueue;
   const firstPendingTask = lastPendingTask.next;
-  if (_firstPendingLaneTask === null) {
-    firstPendingTask.nextLaneTask = firstTask;
-    firstTask.prevLaneTask = firstPendingTask;
-  } else {
-    _firstPendingLaneTask.nextLaneTask = firstTask;
-    firstPendingTask.prevLaneTask = _firstPendingLaneTask;
-  }
-  firstTask.nextLaneTask = firstPendingTask;
-  firstPendingTask.prevLaneTask = firstTask;
   lastTask.next = firstPendingTask;
   firstPendingTask.prev = lastTask;
   lastPendingTask.next = firstTask;
   firstTask.prev = lastPendingTask;
+  if (_currentPendingLaneTask) {
+    if (_currentLaneTask) {
+      _currentLaneTask.nextLaneTask = firstPendingTask;
+      firstPendingTask.prevLaneTask = _currentLaneTask;
+    } else {
+      firstTask.nextLaneTask = firstPendingTask;
+      firstPendingTask.prevLaneTask = firstTask;
+    }
+    _currentPendingLaneTask.nextLaneTask = firstTask;
+    firstTask.prevLaneTask = _currentPendingLaneTask;
+    _currentLaneTask = _currentPendingLaneTask;
+  } else {
+    if (_currentLaneTask) {
+      _currentLaneTask.nextLaneTask = firstPendingTask;
+      firstPendingTask.prevLaneTask = _currentLaneTask;
+      firstPendingTask.nextLaneTask = firstTask;
+      firstTask.prevLaneTask = firstPendingTask;
+    } else {
+      firstTask.nextLaneTask = firstPendingTask;
+      firstTask.prevLaneTask = firstPendingTask;
+      firstPendingTask.nextLaneTask = firstTask;
+      firstPendingTask.prevLaneTask = firstTask;
+    }
+    _currentLaneTask = firstPendingTask;
+  }
   _taskQueue = lastPendingTask;
   _pendingTaskQueue = null;
-  _firstPendingLaneTask = null;
+  _currentPendingLaneTask = null;
 };
 
 export const getFirstTask = () => {
@@ -313,40 +270,38 @@ export const getFirstTask = () => {
 
 export const requestWorkInProgressTaskQueue = (tick: number) => {
   const firstTimerTask = peek();
+  const firstTask = getFirstTask();
+  let task = firstTask;
+  let expiredTaskQueue: ITask | null = null;
+  let workInProgressTaskQueue: ITask | null = null;
   _workInProgressTaskQueue = null;
   if (
     firstTimerTask &&
     (firstTimerTask.expired ||
       (firstTimerTask.expired = firstTimerTask.expirationTick < tick))
   ) {
-    _workInProgressTaskQueue = firstTimerTask.prev;
+    expiredTaskQueue = firstTimerTask.prev;
+  } else {
+    do {
+      if (!task) {
+        break;
+      }
+      if (task.expired || (task.expired = task.expirationTick < tick)) {
+        expiredTaskQueue = task.prev;
+        break;
+      }
+      if (
+        workInProgressTaskQueue === null &&
+        (task.lane & _scheduleLane) === _scheduleLane
+      ) {
+        workInProgressTaskQueue = task.prev;
+      }
+      task = task.nextLaneTask;
+    } while (task !== firstTask);
   }
   if (
-    _workInProgressTaskQueue === null &&
-    _firstTransitionLaneTask &&
-    (_firstTransitionLaneTask.expired ||
-      (_firstTransitionLaneTask.expired =
-        _firstTransitionLaneTask.expirationTick < tick))
+    (_workInProgressTaskQueue = expiredTaskQueue || workInProgressTaskQueue)
   ) {
-    _workInProgressTaskQueue = _firstTransitionLaneTask.prev;
-  }
-  if (
-    _workInProgressTaskQueue === null &&
-    _firstNormalLaneTask &&
-    (_firstNormalLaneTask.expired ||
-      (_firstNormalLaneTask.expired =
-        _firstNormalLaneTask.expirationTick < tick))
-  ) {
-    _workInProgressTaskQueue = _firstNormalLaneTask.prev;
-  }
-  if (_workInProgressTaskQueue === null) {
-    const currentQueue =
-      _firstSyncLaneTask || _firstNormalLaneTask || _firstTransitionLaneTask;
-    if (currentQueue) {
-      _workInProgressTaskQueue = currentQueue.prev;
-    }
-  }
-  if (_workInProgressTaskQueue) {
     _scheduleLane = _workInProgressTaskQueue.next.lane;
   }
 };
@@ -361,51 +316,19 @@ export const popWorkInProgressTask = () => {
     pop();
   }
   if (lastWorkInProgressTask === firstWorkInProgressTask) {
-    _taskQueue = _workInProgressTaskQueue = _firstSyncLaneTask = _firstNormalLaneTask = _firstTransitionLaneTask = _currentSyncLaneTask = _currentNormalLaneTask = _currentTransitionLaneTask = null;
+    _taskQueue = _workInProgressTaskQueue = _currentLaneTask = null;
   } else {
-    const currentLane = firstWorkInProgressTask.lane;
     const nextFirstWorkInProgressTask = firstWorkInProgressTask.next;
-    const prevSameLaneTask = firstWorkInProgressTask.prevSameLaneTask;
-    const nextSameLaneTask = firstWorkInProgressTask.nextSameLaneTask;
     const prevLaneTask = firstWorkInProgressTask.prevLaneTask;
     const nextLaneTask = firstWorkInProgressTask.nextLaneTask;
-    if (nextSameLaneTask && prevSameLaneTask) {
-      if (
-        (nextFirstWorkInProgressTask.lane & firstWorkInProgressTask.lane) ===
-        NoLane
-      ) {
-        prevSameLaneTask.nextSameLaneTask = nextSameLaneTask;
-        nextSameLaneTask.prevSameLaneTask = prevSameLaneTask;
-        if ((currentLane & SyncLane) === SyncLane) {
-          _firstSyncLaneTask = nextSameLaneTask;
-        }
-        if ((currentLane & NormalLane) === NormalLane) {
-          _firstNormalLaneTask = nextSameLaneTask;
-        }
-        if ((currentLane & TransitionLane) === TransitionLane) {
-          _firstTransitionLaneTask = nextSameLaneTask;
-        }
-      } else {
-        nextFirstWorkInProgressTask.prevSameLaneTask = prevSameLaneTask;
-        nextFirstWorkInProgressTask.nextSameLaneTask = nextSameLaneTask;
-        prevLaneTask.nextSameLaneTask = nextFirstWorkInProgressTask;
-        nextSameLaneTask.prevSameLaneTask = nextFirstWorkInProgressTask;
-        if ((currentLane & SyncLane) === SyncLane) {
-          _firstSyncLaneTask = nextFirstWorkInProgressTask;
-        }
-        if ((currentLane & NormalLane) === NormalLane) {
-          _firstNormalLaneTask = nextFirstWorkInProgressTask;
-        }
-        if ((currentLane & TransitionLane) === TransitionLane) {
-          _firstTransitionLaneTask = nextFirstWorkInProgressTask;
-        }
-      }
-    }
     if (prevLaneTask && nextLaneTask) {
       if (nextFirstWorkInProgressTask === nextLaneTask) {
         prevLaneTask.nextLaneTask = nextFirstWorkInProgressTask;
         nextFirstWorkInProgressTask.prevLaneTask = prevLaneTask;
       } else {
+        if (firstWorkInProgressTask === _currentLaneTask) {
+          _currentLaneTask = nextFirstWorkInProgressTask;
+        }
         nextFirstWorkInProgressTask.prevLaneTask = prevLaneTask;
         nextFirstWorkInProgressTask.nextLaneTask = nextLaneTask;
         prevLaneTask.nextLaneTask = nextFirstWorkInProgressTask;
@@ -426,24 +349,13 @@ export const popWorkInProgressTask = () => {
   firstWorkInProgressTask.prevLaneTask = null;
   // @ts-ignore
   firstWorkInProgressTask.nextLaneTask = null;
-  // @ts-ignore
-  firstWorkInProgressTask.prevSameLaneTask = null;
-  // @ts-ignore
-  firstWorkInProgressTask.nextSameLaneTask = null;
+  firstWorkInProgressTask.deprecated = true;
   return firstWorkInProgressTask;
 };
 
 export const getFirstWorkInProgressTask = (tick: number) => {
   if (_workInProgressTaskQueue === null) {
     return null;
-  }
-  const firstTimerTask = peek();
-  if (
-    firstTimerTask &&
-    (firstTimerTask.expired ||
-      (firstTimerTask.expired = firstTimerTask.expirationTick < tick))
-  ) {
-    requestWorkInProgressTaskQueue(tick);
   }
   const lastWorkInProgressTask = _workInProgressTaskQueue;
   const firstWorkInProgressTask = lastWorkInProgressTask.next;

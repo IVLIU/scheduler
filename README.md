@@ -103,8 +103,8 @@ postTask(() => { console.log('我是一个不确定是否执行的任务') },
 
 ## todo
 
-1. 支持避免data tearing api
-2. 支持delay time
-3. 支持动态调整优先级
-4. 多实例支持
-5. 上层api
+1. 支持同步api避免data tearing
+2. 支持设置delay time
+3. 支持设置动态优先级
+4. 支持自定义优先级和过期时间
+5. 多实例支持
