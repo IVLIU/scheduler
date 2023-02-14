@@ -1,76 +1,110 @@
 # scheduler
 
-scheduler是一个基于帧分片实现的任务调度器
+scheduler是一个宏任务分片的调度器。
 
-它可以帮助您优雅的处理大量的JavaScript计算，同时保持页面的快速响应。例如大数据的校验。
+为什么我们需要一个调度器呢？
+由于js线程和UI线程互斥，当js线程长时间占用线程，此时的UI会发生卡顿，给用户不愉悦的体验。
+如果此时有一个调度器可以把任务切割成一段一段的，每执行完一段，就把线程让给UI，使UI可以得到快速响应。
 
-它没有任何依赖，您可以用极低的成本来引入它，同时它的使用超级简单
+为什么是基于宏任务的，明明微任务优先级更高？
+
+熟悉event loop的都知道，要开启下一次循环的前提是清空微任务队列，如果我们把任务都放在微任务的话，那仍然需要很长时间清空队列，此时UI仍然是阻塞的。
+
+## 特性
+
+- 性能高，增删查任务操作99.99%都是在O(1)复杂度下完成，最极端情况也只有O(log(n))复杂度
+- 支持不同优先级的任务
+- 支持任务过期，不会出现饥饿问题
+- 使用简单，仅包含一个核心api和一个辅助api
+- 零依赖，任何项目都可接入
 
 ## 安装
 
 ```bash
 # install
-npm install @ai-indeed/scheduler # or yarn add @ai-indeed/scheduler
+npm install @ai-indeed/scheduler # or yarn add @ai-indeed/scheduler or pnpm add @ai-indeed/scheduler
 ```
 
-## 文档
+## API
 
-它提供的核心api只有一个，即postTask，它很强大也很简单，具体我们看一个例子。
+### postTask
+
+它是最核心的api，使用进需要将任务包裹在回调函数里
 
 ```typescript
 import { postTask } from '@ai-indeed/scheduler';
 
-postTask(() => console.log('i am a task'));
+postTask((tick) => {
+  console.log('我将会在某个时间调用，这是我调用时的时间戳' + tick);
+});
 ```
-以上是一个最简单是使用，传入一个回调函数，它会在合适的时机被执行
 
-想象一个场景，我们有一个输入框和一个数量巨大的列表，通过在输入框输入值来过滤该列表。
-注意我的用词‘数量巨大’，所以如果不做优化的话，页面应该会出现卡顿的。
-从用户的角度来说，他肯定是希望输入框保持快速响应，列表过滤可以慢一点，也可以说输入框输入的优先级要更高。
-所以scheduler实现了优先级调度，目前实现了三个优先级（sync priority，normal priority，transition priority），他们的优先级依次降低。
-看个例子
+### shouldYield
+
+如果耗时任务在事件本身，比如一个很长的循环，那我们可以借助shouldYield来自行决定是否需要暂停
+
 ```typescript
-import { postTask } from '@ai-indeed/scheduler';
-
-postTask(() => console.log('sync task'), { sync: true });
-postTask(() => console.log('normal task'));
-postTask(() => console.log('transition task'), { transition: true });
-postTask(() => console.log('transition task'), { transition: { timeout: 3000 } }); // 自定义过期时间
-```
-同时为了解决饥饿问题，所以我们设置了过期时间，分别是立即过期，50毫秒后过期，和不过期（但是可以设置）。
-
-除此之外，它还提供了一个辅助api，即shouldYield，它帮助您更高效的执行任务。它会在5毫秒后过期。
-看个例子
-```typescript
-import { postTask, shouldYield } from '@ai-indeed/scheduler';
 
 function _exec() {
-  postTask(
-    () => {
-      let arr: RegExpExecArray = null;
-      do {
-        if (!(arr = reg.exec(str))) {
-          break;
-        }
-        console.log(`the matched is ${arr[1]}`);
-      } while (arr && !shouldYield());
-      if (arr) {
-        _exec();
+  postTransitionTask(() => {
+    let arr: RegExpExecArray | null = null;
+    do {
+      if (!(arr = reg.exec(str))) {
+        break;
       }
-    },
-    { transition: true },
-  );
+      console.log(`the matched is ${arr[1]}`);
+    } while (arr && !shouldYield());
+    if (arr) {
+      _exec();
+    }
+  });
 }
-
-_exec();
 ```
 
-## 例子
+## 高阶用法
 
-请参照example
+设置不同优先级，我们可以根据任务的紧迫程度设置响应的优先级
+
+同时我们也提供了postSyncTask和postTransitionTask使用
+
+```typescript
+import { postTask } from '@ai-indeed/scheduler';
+
+postTask(() => {
+  console.log('transition lane task');
+}, { transition: true /** { timeout: number } */ });
+
+postTask(() => console.log('normal lane task'));
+
+postTask(() => console.log('sync lane task'), { sync: true });
+```
+
+取消任务，基于AbortController比如我们的任务是实时刷新的，那么我们可以取消之前的任务，
+
+```typescript
+import { postTask } from '@ai-indeed/scheduler';
+
+const ac = new AbortController();
+
+postTask(() => { console.log('我是一个不确定是否执行的任务') }, 
+{ 
+  signal: ac.signal, 
+  effect: (aborted) => {
+    console.log(`任务${aborted ? '取消了' : '没取消'}`);
+  }});
+
+```
+
+## 使用场景
+
+- dom resize callback
+- dom操作
+- 大数据处理
 
 ## todo
 
-1. 支持tearing api
-2. 支持delay time
-3. 支持动态调整优先级
+1. 支持同步api避免data tearing
+2. 支持设置delay time
+3. 支持设置动态优先级
+4. 支持自定义优先级和过期时间
+5. 多实例支持

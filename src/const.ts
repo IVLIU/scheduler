@@ -1,4 +1,4 @@
-import type { IOptions } from './type';
+import { IOptions } from './type';
 
 // lanes
 export const NoLanes = 0b0000000000000000000000000000000;
