@@ -25,6 +25,7 @@ let _pendingTaskQueue: ITask | null = null;
 let _taskQueue: ITask | null = null;
 let _workInProgressTaskQueue: ITask | null = null;
 let _currentPendingLaneTask: ITask | null = null;
+let _currentNormalLaneTask: ITask | null = null;
 let _currentLaneTask: ITask | null = null;
 let _remainingLanes = NoLanes;
 let _urgentScheduleLane = NoLane;
@@ -115,6 +116,7 @@ export const postTask = (
   } else {
     task.lane = ((_remainingLanes |= NormalLane), NormalLane);
     task.expirationTick = creationTick + NORMAL_PRIORITY_TIMEOUT;
+    _currentNormalLaneTask = task;
   }
   if ((_urgentScheduleLane & (_remainingLanes & -_remainingLanes)) === NoLane) {
     _urgentScheduleLane = _remainingLanes & -_remainingLanes;
@@ -285,15 +287,27 @@ export const requestWorkInProgressTaskQueue = (tick: number) => {
       if (!task) {
         break;
       }
-      if (task.expired || (task.expired = task.expirationTick < tick)) {
-        expiredTaskQueue = task.prev;
-        break;
-      }
       if (
-        workInProgressTaskQueue === null &&
-        (task.lane & _scheduleLane) === _scheduleLane
+        _currentNormalLaneTask &&
+        (_currentNormalLaneTask.expired ||
+          (_currentNormalLaneTask.expired =
+            _currentNormalLaneTask.expirationTick < tick))
       ) {
-        workInProgressTaskQueue = task.prev;
+        if (task.expired || (task.expired = task.expirationTick < tick)) {
+          expiredTaskQueue = task.prev;
+          break;
+        }
+        if (
+          workInProgressTaskQueue === null &&
+          (task.lane & _scheduleLane) === _scheduleLane
+        ) {
+          workInProgressTaskQueue = task.prev;
+        }
+      } else {
+        if ((task.lane & _scheduleLane) === _scheduleLane) {
+          workInProgressTaskQueue = task.prev;
+          break;
+        }
       }
       task = task.nextLaneTask;
     } while (task !== firstTask);
