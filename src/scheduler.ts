@@ -310,14 +310,18 @@ export const requestWorkInProgressTaskQueue = (tick: number) => {
       task = task.nextLaneTask;
     } while (task !== firstNormalTask);
     expiredTaskQueue = firstNormalTask.prev;
-  }
-  {
+  } else {
     task = firstTask;
     do {
       if (!task) {
         break;
       }
-      if (_currentNormalLaneTask === null) {
+      if (
+        _currentNormalLaneTask === null ||
+        !_currentNormalLaneTask.expired ||
+        (_currentNormalLaneTask.expired =
+          _currentNormalLaneTask.expirationTick < tick)
+      ) {
         if ((task.lane & _scheduleLane) === _scheduleLane) {
           workInProgressTaskQueue = task.prev;
           break;
