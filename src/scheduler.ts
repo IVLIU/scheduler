@@ -58,11 +58,12 @@ export const workLoop = () => {
         continue;
       }
       const currentTick = getCurrentTick();
-      if ((_scheduleLane & _urgentScheduleLane) === NoLane && !task.expired) {
-        _scheduleLane = _urgentScheduleLane;
-        continue;
+      if (task.expired) {
+        popWorkInProgressTask();
+        requestWorkInProgressTaskQueue(tick);
+      } else {
+        popWorkInProgressTask();
       }
-      popWorkInProgressTask();
       performTask(task, (tick = currentTick));
       // ? worker中不做切片处理
     } while (scheduleInWorker() || (!isInputPending() && tick < frameDeadTick));
