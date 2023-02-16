@@ -25,7 +25,7 @@ let _pendingTaskQueue: ITask | null = null;
 let _taskQueue: ITask | null = null;
 let _workInProgressTaskQueue: ITask | null = null;
 let _currentPendingLaneTask: ITask | null = null;
-let _currentNormalLaneTask: ITask | null;
+let _currentNormalLaneTask: ITask | null = null;
 let _currentLaneTask: ITask | null = null;
 let _remainingLanes = NoLanes;
 let _urgentScheduleLane = NoLane;
@@ -319,7 +319,7 @@ export const requestWorkInProgressTaskQueue = (tick: number) => {
       if (
         _currentNormalLaneTask === null ||
         !_currentNormalLaneTask.expired ||
-        (_currentNormalLaneTask.expired =
+        !(_currentNormalLaneTask.expired =
           _currentNormalLaneTask.expirationTick < tick)
       ) {
         if ((task.lane & _scheduleLane) === _scheduleLane) {
