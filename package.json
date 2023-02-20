@@ -24,10 +24,10 @@
     "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "publish:patch": "npm version patch && npm publish",
-    "publish:minor": "npm version minor && npm publish",
-    "publish:major": "npm version major && npm publish",
-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "publish:patch": "npm run release --patch",
+    "publish:minor": "npm run release --minor",
+    "publish:major": "npm run release --major",
+    "release": "npx release-it",
     "preinstall": "npx only-allow pnpm"
   },
   "lint-staged": {
@@ -51,11 +51,13 @@
   "devDependencies": {
     "@commitlint/cli": "^16.2.1",
     "@commitlint/config-conventional": "^16.2.1",
+    "@release-it/conventional-changelog": "^5.1.1",
     "@size-limit/preset-small-lib": "^7.0.8",
     "@types/node": "^18.11.19",
     "conventional-changelog-cli": "^2.2.2",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.4",
+    "release-it": "^15.6.0",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",

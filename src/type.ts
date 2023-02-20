@@ -12,14 +12,13 @@ export interface ITask {
   effect: ((aborted: boolean) => void) | null;
   debugger: ((task: ITask) => void) | null;
   signal: AbortSignal | null;
+  pending: boolean;
   expired: boolean;
   deprecated: boolean;
   prev: ITask;
   next: ITask;
   prevLaneTask: ITask;
   nextLaneTask: ITask;
-  prevSameLaneTask: ITask;
-  nextSameLaneTask: ITask;
 }
 
 export interface IOptions {
