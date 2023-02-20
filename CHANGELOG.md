@@ -1,3 +1,20 @@
+
+
+# [2.4.0](https://github.com/IVLIU/scheduler/compare/v2.3.0...v2.4.0) (2023-02-20)
+
+
+### Features
+
+* 调度优化 ([ef5d7c5](https://github.com/IVLIU/scheduler/commit/ef5d7c519ef5853a6ac34be7584e0b9bec1d5046))
+* 调度优化 ([b2de27d](https://github.com/IVLIU/scheduler/commit/b2de27d246c49c2e28aa34825690a6c219669c63))
+* 调度优化 ([76049e0](https://github.com/IVLIU/scheduler/commit/76049e02f9a805b12ec37adea08d5e4d18a79814))
+* 调度优化 ([b4c4cf3](https://github.com/IVLIU/scheduler/commit/b4c4cf3cc4c222fbf55662d2e57645d9b612b24d))
+* 调度优化 ([d472c91](https://github.com/IVLIU/scheduler/commit/d472c91406fe02f2f4c5bf4d4106940ac2af3bf8))
+* 调度优化 ([4a09211](https://github.com/IVLIU/scheduler/commit/4a092118a6d5ddfb81c14994cd7f89d875e84f44))
+* 实时校验是否存在过期任务 ([26161e1](https://github.com/IVLIU/scheduler/commit/26161e19da4e15a3d38667919c5c647e3e29cde6))
+* 实时校验是否存在过期任务 ([0d3f96b](https://github.com/IVLIU/scheduler/commit/0d3f96b749a7636a65390bd7c3591a75a2049530))
+* 添加自动化发布 ([41849d7](https://github.com/IVLIU/scheduler/commit/41849d701e0e2adafd7dbc772093d1145533636b))
+
 # 1.2.0 (2023-01-06)
 
 
@@ -74,6 +91,3 @@
 * force batched exec ([8671fae](https://code.ii-ai.tech:2222/ued/ii-scheduler/commits/8671fae9a36c828da0c1fad3beee50159322f96e))
 * only merge request ([a8669d5](https://code.ii-ai.tech:2222/ued/ii-scheduler/commits/a8669d5328956d5bcbe8c30f369f09bc5f11a4e5))
 * remove unstable api ([1dc7caf](https://code.ii-ai.tech:2222/ued/ii-scheduler/commits/1dc7caf84256ed2212a4b05c403e7ee314f88a85))
-
-
-
