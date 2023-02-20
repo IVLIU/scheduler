@@ -24,9 +24,9 @@
     "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "publish:patch": "npm run release --patch",
-    "publish:minor": "npm run release --minor",
-    "publish:major": "npm run release --major",
+    "publish:patch": "npx release-it --patch",
+    "publish:minor": "npx release-it --minor",
+    "publish:major": "npx release-it --major",
     "release": "npx release-it",
     "preinstall": "npx only-allow pnpm"
   },
