@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "publishConfig": {
-    "registry": "http://10.4.2.21:8081/repository/npm-hosted/"
+    "registry": "https://packages.aliyun.com/62cf7f0b487c500c27f70f94/npm/npm-registry/"
   },
   "files": [
     "dist"
@@ -20,10 +20,9 @@
     "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "publish:patch": "npm run release --patch",
-    "publish:minor": "npm run release --minor",
-    "publish:major": "npm run release --major",
-    "release": "npx release-it",
+    "publish:patch": "npx release-it -- patch",
+    "publish:minor": "npx release-it -- minor",
+    "publish:major": "npx release-it -- major",
     "preinstall": "npx only-allow pnpm"
   },
   "lint-staged": {
