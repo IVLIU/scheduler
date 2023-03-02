@@ -24,10 +24,9 @@
     "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "publish:patch": "npx release-it --patch",
-    "publish:minor": "npx release-it --minor",
-    "publish:major": "npx release-it --major",
-    "release": "npx release-it",
+    "publish:patch": "npx release-it -- patch",
+    "publish:minor": "npx release-it -- minor",
+    "publish:major": "npx release-it -- major",
     "preinstall": "npx only-allow pnpm"
   },
   "lint-staged": {

@@ -4,6 +4,7 @@ import { runMicroTaskCallback } from './runMicroTaskCallback';
 import { scheduleInWorker } from './scheduleInWorker';
 import { getCurrentTick } from './getCurrentTick';
 import { isInputPending } from './isInputPending';
+import { yieldTickRef } from './shouldYield';
 import { warn } from './warn';
 import {
   NoLanes,
@@ -75,6 +76,7 @@ export const workLoop = () => {
       schedule();
     }
   } finally {
+    yieldTickRef.current = -1;
     _scheduleLane = prevScheduleLane;
     _isScheduling = false;
   }
