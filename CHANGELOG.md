@@ -1,5 +1,20 @@
 
 
+## [2.4.2](https://github.com/IVLIU/scheduler/compare/v2.4.0...v2.4.2) (2023-03-15)
+
+
+### Bug Fixes
+
+* form reset error ([b844ea3](https://github.com/IVLIU/scheduler/commit/b844ea316b33bb732abb954f5f1d5bfe56a0f1eb))
+* should yield重置错误缺陷 ([7d52ff1](https://github.com/IVLIU/scheduler/commit/7d52ff16af8f3521ab590f1a7287e6a55cb082c7))
+* should yield重置错误缺陷 ([988552a](https://github.com/IVLIU/scheduler/commit/988552a6ca7944e50a101b8d958134f626a8f671))
+
+
+### Features
+
+* 添加自动化发布 ([2e8810e](https://github.com/IVLIU/scheduler/commit/2e8810e8f97649a65d7fa3606dd0b9dc4a685e57))
+* 添加自动化发布 ([d4a7cb0](https://github.com/IVLIU/scheduler/commit/d4a7cb0a4b2752143caaf6a4443b6426286300d9))
+
 # [2.4.0](https://github.com/IVLIU/scheduler/compare/v2.3.0...v2.4.0) (2023-02-20)
 
 
