@@ -1,14 +1,10 @@
 {
-  "version": "2.4.2",
+  "version": "2.4.1",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
-  "homepage": "https://github.com/IVLIU/scheduler",
-  "bugs": {
-    "url": "https://github.com/IVLIU/scheduler/issues"
-  },
   "publishConfig": {
-    "registry": "http://nexus.ii-ai.tech/repository/npm-group/"
+    "registry": "https://packages.aliyun.com/62cf7f0b487c500c27f70f94/npm/npm-registry/"
   },
   "files": [
     "dist"
@@ -31,7 +27,7 @@
   },
   "lint-staged": {
     "**/*.ts?(x)": [
-      "npx prettier src/**/* --parser=typescript --fix --write"
+      "npx prettier --parser=typescript --fix --write"
     ]
   },
   "name": "@ai-indeed/scheduler",
