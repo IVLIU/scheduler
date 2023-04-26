@@ -21,7 +21,7 @@ export const createMinHeap = () => {
     if (index === 0) {
       return;
     }
-    const parentIndex = ~~((index - 1) / 2);
+    const parentIndex = (index - 1) >>> 1;
     if (heap[parentIndex].expirationTick > heap[index].expirationTick) {
       swap(parentIndex, index);
       shiftUp(parentIndex);
