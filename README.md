@@ -1,5 +1,7 @@
 # scheduler
 
+![Image text](./demo.gif)
+
 scheduler是一个宏任务分片的调度器。
 
 为什么我们需要一个调度器呢？
