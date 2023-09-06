@@ -1,3 +1,5 @@
+export type TSchedulePriority = 'user-blocking' | 'user-visible' | 'background';
+
 export interface ITask {
   index: number;
   sortIndex: number;
@@ -30,9 +32,7 @@ export interface IOptions {
 }
 
 export interface ITaskController {
-  new (options: {
-    priority?: 'user-blocking' | 'user-visible' | 'background';
-  }): {
+  new (options: { priority?: TSchedulePriority }): {
     signal: { aborted: boolean };
     abort: () => void;
   };
@@ -47,11 +47,10 @@ export interface IScheduler {
       delay: number;
     }>,
   ) => Promise<ReturnType<typeof callback>>;
+  yield: () => Promise<any>;
 }
 
 export interface ITaskSignal {
   aborted: boolean;
   priority: TSchedulePriority;
 }
-
-export type TSchedulePriority = 'user-blocking' | 'user-visible' | 'background';
