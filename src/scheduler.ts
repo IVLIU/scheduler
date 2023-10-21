@@ -60,7 +60,7 @@ export const workLoop = () => {
         continue;
       }
       const currentTick = getCurrentTick();
-      if (task.expired) {
+      if ((task.lane & SyncLane) === NoLane && task.expired) {
         popWorkInProgressTask();
         requestWorkInProgressTaskQueue(tick);
       } else {
@@ -158,7 +158,8 @@ export const schedule = () =>
   runMicroTaskCallback(() => {
     pushTask();
     if (_taskQueue) {
-      if ((_remainingLanes & -_remainingLanes) === NoLane) {
+      let lane = _remainingLanes & -_remainingLanes;
+      if (lane === NoLane) {
         const lastTask = _taskQueue;
         const firstTask = lastTask.next;
         if (!firstTask.nextLaneTask) {
@@ -174,7 +175,7 @@ export const schedule = () =>
           } while (task !== firstTask);
         }
       }
-      const lane = _remainingLanes & -_remainingLanes;
+      lane = _remainingLanes & -_remainingLanes;
       dispatch({
         priority:
           (lane & SyncLane) === SyncLane
